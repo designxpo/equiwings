@@ -241,6 +241,7 @@ export default function HeroCarousel() {
     setTouchEnd(currentTouch)
   }
 
+  
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!touchStart || !touchEnd) return
 
