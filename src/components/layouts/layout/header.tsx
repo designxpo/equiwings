@@ -4,7 +4,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { useCustomerAuth } from "@/providers/customer-auth-context"
 import { LuShoppingBag, LuUser } from "react-icons/lu"
@@ -14,17 +14,18 @@ const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
   const { isAuthenticated, logout, customer } = useCustomerAuth();
 
   // Check if we're on pages with transparent header
-  const isTransparentHeaderPage = pathname === "/" || pathname === "/services" || pathname === "/blogs" || pathname === "/sports-and-events" || pathname.startsWith("/sports-and-events/") || pathname === "/about-us"
+  const isTransparentHeaderPage = pathname === "/" || pathname === "/services" || pathname === "/sports-and-events" || pathname.startsWith("/sports-and-events/") || pathname === "/about-us"
 
   // Navigation links
   const navLinks = [
     { href: "/sports-and-events", label: "Sports & Events" },
     { href: "/services", label: "Services" },
     { href: "/sports-retail", label: "Sports Retail" },
-    { href: "/blogs", label: "Blogs" },
+    { href: "#news", label: "News" },
     { href: "/about-us", label: "About Us" },
   ]
 
@@ -54,6 +55,32 @@ const Header: React.FC = () => {
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
+  }
+
+  // Function to handle news section navigation
+  const handleNewsClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsMobileMenuOpen(false) // Close mobile menu if open
+    
+    if (pathname === "/") {
+      // If already on home page, just scroll to news section
+      setTimeout(() => {
+        const newsSection = document.getElementById("news")
+        if (newsSection) {
+          newsSection.scrollIntoView({ behavior: "smooth", block: "start" })
+        }
+      }, 100)
+    } else {
+      // If on another page, navigate to home and then scroll to news
+      router.push("/")
+      // Wait for navigation to complete before scrolling
+      setTimeout(() => {
+        const newsSection = document.getElementById("news")
+        if (newsSection) {
+          newsSection.scrollIntoView({ behavior: "smooth", block: "start" })
+        }
+      }, 500)
+    }
   }
 
   // Component for animated underline link
@@ -136,7 +163,7 @@ const Header: React.FC = () => {
                       : "text-white"
                     }`}
                 >
-                  Sports & Events
+                  Sports Events
                 </AnimatedLink>
               </div>
 
@@ -154,7 +181,7 @@ const Header: React.FC = () => {
                 </Link>
               </div>
 
-              {/* RIGHT OF LOGO: Sports Retail | Blogs */}
+              {/* RIGHT OF LOGO: Sports Retail | News */}
               <div className="flex-1 flex justify-center">
                 <AnimatedLink
                   href="/sports-retail"
@@ -170,17 +197,17 @@ const Header: React.FC = () => {
               </div>
 
               <div className="flex-1 flex justify-center">
-                <AnimatedLink
-                  href="/blogs"
-                  className={`text-sm transition-colors duration-200 hover:text-purple-400 whitespace-nowrap ${pathname === "/blogs"
-                    ? "text-purple-400"
-                    : isScrolled || isMobileMenuOpen
-                      ? "text-gray-700"
-                      : "text-white"
+                <button
+                  onClick={handleNewsClick}
+                  className={`text-sm transition-colors duration-200 hover:text-purple-400 whitespace-nowrap cursor-pointer relative font-medium group ${isScrolled || isMobileMenuOpen
+                    ? "text-gray-700"
+                    : "text-white"
                     }`}
                 >
-                  Blogs
-                </AnimatedLink>
+                  News
+                  {/* Hover state underline */}
+                  <motion.div className="absolute bottom-0 left-0 h-0.5 bg-purple-400 w-0 group-hover:w-full transition-all duration-300 ease-in-out" />
+                </button>
               </div>
 
               {/* Auth/Profile area remains at far right */}
@@ -213,7 +240,6 @@ const Header: React.FC = () => {
           < div className="lg:hidden" >
             <div className="flex items-center justify-between py-4">
               {/* Mobile Logo */}
-
 
               <Link href="/" className="flex items-center">
                 <div className="relative w-16 h-16">
@@ -278,14 +304,24 @@ const Header: React.FC = () => {
             >
               <nav className="px-4 py-6 space-y-4">
                 {navLinks.map((link) => (
-                  <AnimatedLink
-                    key={link.href}
-                    href={link.href}
-                    className="block text-gray-700 hover:text-purple-800 font-medium py-2 transition-all duration-200 transform hover:translate-x-2"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {link.label}
-                  </AnimatedLink>
+                  link.href === "#news" ? (
+                    <button
+                      key={link.href}
+                      onClick={handleNewsClick}
+                      className="block text-gray-700 hover:text-purple-800 font-medium py-2 transition-all duration-200 transform hover:translate-x-2 text-left w-full"
+                    >
+                      {link.label}
+                    </button>
+                  ) : (
+                    <AnimatedLink
+                      key={link.href}
+                      href={link.href}
+                      className="block text-gray-700 hover:text-purple-800 font-medium py-2 transition-all duration-200 transform hover:translate-x-2"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {link.label}
+                    </AnimatedLink>
+                  )
                 ))}
                 {!isAuthenticated && (
                   <Link

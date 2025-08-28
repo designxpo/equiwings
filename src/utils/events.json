@@ -1,0 +1,71 @@
+{
+    "pastEvents": [
+        {
+            "id": "the-penta-grand-2022",
+            "date": "10-18 DECEMBER, 2022",
+            "title": "The Penta Grand 2022",
+            "description": "A premier equestrian championship featuring National Qualifiers, Ghaziabad Horse Show, U.P. Horse Show & NCR Inter-School Championship, held from 10 - 18 December 2022 at GHRC, Ghaziabad, uniting top teams from the Army, Police, Paramilitary, schools, and clubs nationwide.",
+            "pastPrograms": true,
+            "location": "Gurukul",
+            "image": "/assets/images/past-events/22/7.JPG",
+            "eventImages": [
+                "/assets/images/past-events/22/1.JPG",
+                "/assets/images/past-events/22/2.JPG",
+                "/assets/images/past-events/22/3.JPG",
+                "/assets/images/past-events/22/4.JPG",
+                "/assets/images/past-events/22/5.JPG",
+                "/assets/images/past-events/22/6.JPG",
+                "/assets/images/past-events/22/7.JPG",
+                "/assets/images/past-events/22/8.JPG",
+                "/assets/images/past-events/22/9.JPG",
+                "/assets/images/past-events/22/10.JPG",
+                "/assets/images/past-events/22/11.JPG",
+                "/assets/images/past-events/22/12.JPG",
+                "/assets/images/past-events/22/13.JPG",
+                "/assets/images/past-events/22/14.JPG",
+                "/assets/images/past-events/22/15.JPG"
+            ]
+        },
+        {
+            "id": "the-penta-grand-2021",
+            "date": "2021",
+            "title": "The Penta Grand 2021",
+            "description": "A premier equestrian championship featuring National Qualifiers, Ghaziabad Horse Show, U.P. Horse Show & NCR Inter-School Championship, held from 10 - 18 December 2022 at GHRC, Ghaziabad, uniting top teams from the Army, Police, Paramilitary, schools, and clubs nationwide.",
+            "pastPrograms": true,
+            "location": "Gurukul",
+            "image": "/assets/images/past-events/21/6.JPG",
+            "eventImages": [
+                "/assets/images/past-events/21/1.JPG",
+                "/assets/images/past-events/21/2.JPG",
+                "/assets/images/past-events/21/3.JPG",
+                "/assets/images/past-events/21/4.JPG",
+                "/assets/images/past-events/21/5.JPG",
+                "/assets/images/past-events/21/6.JPG",
+                "/assets/images/past-events/21/7.JPG",
+                "/assets/images/past-events/21/8.JPG",
+                "/assets/images/past-events/21/9.JPG",
+                "/assets/images/past-events/21/10.JPG"
+            ]
+        },
+        {
+            "id": "world-equestrian-tent-pegging-2013",
+            "date": "2013",
+            "title": "World Equestrian Tent Pegging 2013",
+            "description": "Equiwings School of Equestrian Excellence proudly hosts the World Equestrian Tent Pegging 2013, a premier equestrian event in the NCR region.",
+            "location": "Tau Devilal Stadium Gurgaon",
+            "pastPrograms": true,
+            "image": "/assets/images/past-events/13/7.JPG",
+            "eventImages": [
+                "/assets/images/past-events/13/1.JPG",
+                "/assets/images/past-events/13/2.JPG",
+                "/assets/images/past-events/13/3.JPG",
+                "/assets/images/past-events/13/4.JPG",
+                "/assets/images/past-events/13/5.JPG",
+                "/assets/images/past-events/13/6.JPG",
+                "/assets/images/past-events/13/8.JPG",
+                "/assets/images/past-events/13/9.JPG",
+                "/assets/images/past-events/13/10.JPG"
+            ]
+        }
+    ]
+}

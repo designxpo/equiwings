@@ -209,6 +209,7 @@ const News: React.FC = () => {
 
   return (
     <motion.section
+      id="news"
       className="py-20 px-4 bg-[url(/assets/images/bg-4.webp)] overflow-hidden w-full bg-center bg-no-repeat bg-cover"
       variants={containerVariants}
       initial="hidden"
