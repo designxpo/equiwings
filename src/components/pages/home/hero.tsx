@@ -112,10 +112,10 @@ export default function HeroCarousel() {
   useEffect(() => {
     const centerSlide = getCenterSlide()
     if (videoRef.current && centerSlide) {
-      videoRef.current.load()
-      videoRef.current.play().catch(() => {
-        // Handle autoplay restrictions
-      })
+      // videoRef.current.load()
+      // videoRef.current.play().catch(() => {
+      //   // Handle autoplay restrictions
+      // })
     }
   }, [slidePositions])
 
@@ -241,7 +241,6 @@ export default function HeroCarousel() {
     setTouchEnd(currentTouch)
   }
 
-  
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!touchStart || !touchEnd) return
 
@@ -290,11 +289,11 @@ export default function HeroCarousel() {
   const getDisplayDescription = (description: string, slideId: number, maxLength = 100) => {
     const isExpanded = expandedDescriptions[slideId]
     const needsReadMore = description.length > maxLength
-    
+
     if (!needsReadMore) {
       return { text: description, showToggle: false }
     }
-    
+
     if (isExpanded) {
       return { text: description, showToggle: true }
     } else {
@@ -456,13 +455,14 @@ export default function HeroCarousel() {
       {/* Background Video */}
       <motion.div
         className="absolute inset-0 w-full h-full"
-        key={centerSlideData?.id}
+        // key={centerSlideData?.id}
         initial={{ scale: 1.05, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
       >
         <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted loop playsInline>
-          <source src={centerSlideData?.video} type="video/mp4" />
+          {/* {centerSlideData?.video} */}
+          <source src="/assets/videos/home/hero/home.mp4" type="video/mp4" />
         </video>
         <div className="absolute inset-0 bg-black/40" />
       </motion.div>

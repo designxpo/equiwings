@@ -1,7 +1,11 @@
+"use client"
 import Image from "next/image";
 import { FaLinkedin, FaTwitter, FaInstagram, FaFacebook } from "react-icons/fa";
+import useScrollAnimation from "@/hooks/use-animation";
 
 export default function TeamSection() {
+    const visibleElements = useScrollAnimation();
+
     const teamMembers = [
         {
             name: "Mr Bhishm Gaurav Vashisht",
@@ -42,7 +46,14 @@ export default function TeamSection() {
         <div className="bg-[url('/assets/images/bg-4.webp')] bg-cover bg-center bg-no-repeat py-8 sm:py-12 lg:py-16">
             <div className="max-w-7xl mx-auto px-4">
                 {/* Section Header */}
-                <div className="text-center mb-8 sm:mb-12 lg:mb-16">
+                <div
+                    className={`text-center mb-8 sm:mb-12 lg:mb-16 transition-all duration-1000 ${visibleElements.has('team-header')
+                            ? 'opacity-100 translate-y-0'
+                            : 'opacity-0 translate-y-10'
+                        }`}
+                    id="team-header"
+                    data-animate
+                >
                     <h2 className="text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-4">
                         Advisory Board
                     </h2>
@@ -55,9 +66,15 @@ export default function TeamSection() {
                 {/* Team Members Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                     {teamMembers.map((member, index) => (
-                        <div 
+                        <div
                             key={index}
-                            className="group relative rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-gray-200 bg-white"
+                            className={`group relative rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-gray-200 bg-white ${visibleElements.has(`team-member-${index}`)
+                                    ? 'opacity-100 translate-y-0'
+                                    : 'opacity-0 translate-y-10'
+                                }`}
+                            id={`team-member-${index}`}
+                            data-animate
+                            style={{ transitionDelay: `${300 + index * 150}ms` }}
                         >
                             {/* Full Image Container */}
                             <div className="relative h-96 sm:h-[420px] lg:h-[480px] overflow-hidden">
@@ -68,10 +85,10 @@ export default function TeamSection() {
                                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                 />
-                                
+
                                 {/* Dark Gradient Overlay */}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
-                                
+
                                 {/* Social Media Overlay - Top */}
                                 {/* <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                     <div className="flex flex-col space-y-2">

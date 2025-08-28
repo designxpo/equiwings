@@ -182,7 +182,7 @@ export default function RoyalTimeline() {
       <h2 className="text-xl md:text-2xl lg:text-3xl xl:text-4xl text-center text-[#350D3C]">Our Legacy</h2>
 
       {/* Navigation Controls - bottom center */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
         <button
           onClick={handleMoveLeft}
           className="bg-white/90 hover:bg-white border border-cardinal-pink-200 hover:border-cardinal-pink-400 rounded-full p-2 shadow-lg hover:shadow-xl transition-all duration-300 group"

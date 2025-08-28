@@ -1,5 +1,6 @@
 "use client";
 import { motion } from "framer-motion"
+import Link from "next/link";
 import React from 'react'
 
 export default function Gallery() {
@@ -57,6 +58,12 @@ export default function Gallery() {
                     <img src="/assets/images/home/gallery/7.jpg" alt="Gallery Image 7" className="w-full h-70 hover:scale-95 transition duration-300 hover:shadow-purple-800 hover:shadow-xl object-cover rounded-lg shadow-lg" />
                 </div>
 
+            </div>
+
+            <div className="flex justify-center mx-auto">
+                <Link href="/gallery" className="px-6 py-3 hover:cursor-pointer bg-cardinal-pink-800 hover:bg-cardinal-pink-900 text-white rounded-full transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-cardinal-pink-900 focus:ring-opacity-50">
+                    View More
+                </Link>
             </div>
         </section>
     );
