@@ -110,7 +110,7 @@ const Announcements = () => {
   if (loading) {
     return (
       <section className="py-20 relative bg-[url(/assets/images/bg-2.webp)] overflow-hidden w-full bg-center bg-no-repeat bg-cover">
-        <h2 className="text-xl md:text-2xl lg:text-3xl xl:text-4xl text-center mb-2 md:mb-4 lg:mb-18 text-white">Announcements</h2>
+        <h2 className="text-3xl xl:text-5xl font-semibold text-center mb-2 md:mb-4 lg:mb-18 text-white">Announcements</h2>
         <div className="max-w-screen-xl mx-auto px-4 flex justify-center items-center min-h-[400px]">
           <div className="text-white text-xl">Loading announcements...</div>
         </div>
@@ -122,7 +122,7 @@ const Announcements = () => {
   if (error) {
     return (
       <section className="py-20 relative bg-[url(/assets/images/bg-2.webp)] overflow-hidden w-full bg-center bg-no-repeat bg-cover">
-        <h2 className="text-xl md:text-2xl lg:text-3xl xl:text-4xl text-center mb-2 md:mb-4 lg:mb-18 text-white">Announcements</h2>
+        <h2 className="text-3xl xl:text-5xl font-semibold text-center mb-2 md:mb-4 lg:mb-18 text-white">Announcements</h2>
         <div className="max-w-screen-xl mx-auto px-4 flex justify-center items-center min-h-[400px]">
           <div className="text-white text-xl text-center">
             <p>{error}</p>
@@ -142,7 +142,7 @@ const Announcements = () => {
   if (announcements.length === 0) {
     return (
       <section className="py-20 relative bg-[url(/assets/images/bg-2.webp)] overflow-hidden w-full bg-center bg-no-repeat bg-cover">
-        <h2 className="text-xl md:text-2xl lg:text-3xl xl:text-4xl text-center mb-2 md:mb-4 lg:mb-18 text-white">Announcements</h2>
+        <h2 className="text-3xl xl:text-5xl font-semibold text-center mb-2 md:mb-4 lg:mb-18 text-white">Announcements</h2>
         <div className="max-w-screen-xl mx-auto px-4 flex justify-center items-center min-h-[400px]">
           <div className="text-white text-xl">No announcements available</div>
         </div>
@@ -152,7 +152,7 @@ const Announcements = () => {
 
   return (
     <section className="py-20 relative bg-[url(/assets/images/bg-2.webp)] overflow-hidden w-full bg-center bg-no-repeat bg-cover">
-      <h2 className="text-xl md:text-2xl lg:text-3xl xl:text-4xl text-center mb-2 md:mb-4 lg:mb-18 text-white">Announcements</h2>
+      <h2 className="text-3xl xl:text-5xl font-semibold text-center mb-2 md:mb-4 lg:mb-18 text-white">Announcements</h2>
 
       <div className="max-w-screen-xl mx-auto grid lg:grid-cols-2 px-4 lg:mb-5">
         {/* Content Section */}

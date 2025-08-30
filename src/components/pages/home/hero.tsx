@@ -711,7 +711,7 @@ export default function HeroCarousel() {
                       >
                         <motion.h3
                           className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-2xl xl:text-3xl 
-                            font-bold mb-1 leading-tight"
+                            font-semibold mb-1 leading-tight"
                           initial={{ x: -20, opacity: 0 }}
                           animate={{ x: 0, opacity: 1 }}
                           transition={{

@@ -10,27 +10,27 @@ export default function WhyChooseUsSection() {
 
     const features = [
         {
-            icon: <FaUserShield className="text-cardinal-pink-900 text-2xl" />,
+            icon: "5.png",
             title: "Expert Coaches & Care",
             description: "Certified professionals ensure safety and growth."
         },
         {
-            icon: <FaUserFriends className="text-cardinal-pink-900 text-2xl" />,
+            icon: "1.png",
             title: "All Levels Welcome",
             description: "From 'first-ride' to professional competition prep."
         },
         {
-            icon: <FaGlobeAsia className="text-cardinal-pink-900 text-2xl" />,
+            icon: "4.png",
             title: "National & International Reach",
             description: "Access training venues across India & abroad."
         },
         {
-            icon: <FaHandsHelping className="text-cardinal-pink-900 text-2xl" />,
+            icon: "2.png",
             title: "End-to-End Solutions",
             description: "From coaching to competition, we manage it all."
         },
         {
-            icon: <MdEmojiEvents className="text-cardinal-pink-900 text-2xl" />,
+            icon: "3.png",
             title: "Proven Results",
             description: "Show wins, certified riders & lifelong equestrian journeys."
         }
@@ -43,8 +43,8 @@ export default function WhyChooseUsSection() {
                     {/* Left Image Section - Full coverage */}
                     <div
                         className={`relative h-96 lg:h-auto transition-all duration-1000 ${visibleElements.has('wcu-image')
-                                ? 'opacity-100 translate-x-0'
-                                : 'opacity-0 -translate-x-10'
+                            ? 'opacity-100 translate-x-0'
+                            : 'opacity-0 -translate-x-10'
                             }`}
                         id="wcu-image"
                         data-animate
@@ -54,7 +54,7 @@ export default function WhyChooseUsSection() {
                             alt="Why Choose Us"
                             fill
                             className="object-cover"
-                            // sizes="(max-width: 1024px) 100vw, 50vw"
+                        // sizes="(max-width: 1024px) 100vw, 50vw"
                         />
                     </div>
 
@@ -62,8 +62,8 @@ export default function WhyChooseUsSection() {
                     <div className="flex flex-col justify-center p-8 lg:p-16 bg-white">
                         <div
                             className={`mb-12 transition-all duration-1000 delay-200 ${visibleElements.has('wcu-header')
-                                    ? 'opacity-100 translate-y-0'
-                                    : 'opacity-0 translate-y-10'
+                                ? 'opacity-100 translate-y-0'
+                                : 'opacity-0 translate-y-10'
                                 }`}
                             id="wcu-header"
                             data-animate
@@ -80,8 +80,8 @@ export default function WhyChooseUsSection() {
                                 <div
                                     key={index}
                                     className={`group hover:bg-gray-50 p-6 rounded-xl transition-all duration-300 hover:shadow-lg border border-transparent hover:border-gray-200 ${visibleElements.has(`wcu-feature-${index}`)
-                                            ? 'opacity-100 translate-y-0'
-                                            : 'opacity-0 translate-y-10'
+                                        ? 'opacity-100 translate-y-0'
+                                        : 'opacity-0 translate-y-10'
                                         }`}
                                     id={`wcu-feature-${index}`}
                                     data-animate
@@ -89,7 +89,7 @@ export default function WhyChooseUsSection() {
                                 >
                                     <div className="flex items-start space-x-4">
                                         <div className="flex-shrink-0 p-3 bg-gray-100 rounded-lg group-hover:bg-white transition-colors duration-300">
-                                            {feature.icon}
+                                            <Image src={`/assets/images/about-us/icons/${feature.icon}`} alt={feature.title} width={50} height={50} />
                                         </div>
                                         <div>
                                             <h3 className="text-xl font-semibold text-gray-900 mb-2">

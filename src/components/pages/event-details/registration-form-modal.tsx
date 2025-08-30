@@ -1,7 +1,7 @@
 "use client"
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LuX, LuPlus, LuMinus, LuUser, LuCalendar, LuTrophy, LuMapPin } from 'react-icons/lu';
+import { LuX, LuPlus, LuMinus, LuUser, LuCalendar, LuTrophy, LuMapPin, LuAlarmClock } from 'react-icons/lu';
 
 // Age Categories as per EFI/FEI Rules
 const AGE_CATEGORIES = [
@@ -14,16 +14,19 @@ const AGE_CATEGORIES = [
     { id: 'children_gp5', name: 'Children Group V', minAge: 6, maxAge: 7 },
     { id: 'children_gp6', name: 'Children Group VI', minAge: 5, maxAge: 6 },
     { id: 'children_gp7', name: 'Children Group VII', minAge: 4, maxAge: 5 },
+    { id: 'senior', name: 'Senior Rider', minAge: 18, maxAge: 100 },
+    { id: 'ladies', name: 'Ladies', minAge: 0, maxAge: 100 }, // Open for Ladies of All Age Groups
+    { id: 'all', name: 'Open', minAge: 0, maxAge: 100 } // Open for all Age Categories
 ];
 
-// Event Categories with age-specific events
+// Event Categories with proper age-specific events
 const EVENT_CATEGORIES = {
     gymkhana: {
         name: 'GYMKHANA EVENTS',
         events: {
+            // Open events (available for all age categories)
             all: [
                 'Open Hacks',
-                'Ladies Hacks',
                 'Stick & Ball Race Open (Mounted)',
                 'Pole Bending Race Open',
                 'Ball & Bucket Race Open',
@@ -36,6 +39,7 @@ const EVENT_CATEGORIES = {
                 'Whip & Ring Race Open',
                 'Baton Race Open',
                 'Baton Race Bareback Open',
+                'Pole Bending Race Bareback',
                 'Trot Carrot Cutting Race Open',
                 'Trot Carrot & Peg Race Open',
                 'Trot Rings & Peg Open',
@@ -44,6 +48,7 @@ const EVENT_CATEGORIES = {
                 'Trot Paired Tent Pegging Sword Open',
                 'Trot Tent Pegging Individual Sword Open'
             ],
+            // Ladies events (open for ladies of all age groups)
             ladies: [
                 'Ladies Hacks',
                 'Stick & Ball Race Ladies',
@@ -64,12 +69,14 @@ const EVENT_CATEGORIES = {
                 'Trot Paired Tent Pegging Sword Ladies',
                 'Trot Tent Pegging Individual Sword Ladies'
             ],
+            // Senior Rider events (Above 18 Years)
             senior: [
                 'Hacks Senior Rider',
                 'Stick & Ball Race Senior Rider',
                 'Pole Bending Race Senior',
                 'Ball & Bucket Race Senior'
             ],
+            // Young Rider events (16-21 years)
             young_rider: [
                 'Hacks Young Rider',
                 'Stick & Ball Race Young Rider',
@@ -90,6 +97,7 @@ const EVENT_CATEGORIES = {
                 'Trot Paired Tent Pegging Sword Young Rider',
                 'Trot Tent Pegging Individual Sword Young Rider'
             ],
+            // Junior Rider events (14-18 years)
             junior_rider: [
                 'Hacks Junior Rider',
                 'Stick & Ball Race Junior Rider',
@@ -110,6 +118,7 @@ const EVENT_CATEGORIES = {
                 'Trot Paired Tent Pegging Sword Junior Rider',
                 'Trot Tent Pegging Individual Sword Junior Rider'
             ],
+            // Children Group 1 events (12-14 years)
             children_gp1: [
                 'Hacks Children Gp 1',
                 'Stick & Ball Race Children Gp 1',
@@ -130,6 +139,7 @@ const EVENT_CATEGORIES = {
                 'Trot Paired Tent Pegging Sword Children Gp 1',
                 'Trot Tent Pegging Individual Sword Gp 1'
             ],
+            // Children Group 2 events (10-12 years)
             children_gp2: [
                 'Hacks Children Gp 2',
                 'Stick & Ball Race Children Gp 2',
@@ -150,6 +160,7 @@ const EVENT_CATEGORIES = {
                 'Trot Paired Tent Pegging Sword Children Gp 2',
                 'Trot Tent Pegging Individual Sword Gp 2'
             ],
+            // Children Group 3 events (8-10 years) - Limited events as per PDF
             children_gp3: [
                 'Hacks Children Gp 3',
                 'Stick & Ball Race Children Gp 3',
@@ -163,6 +174,7 @@ const EVENT_CATEGORIES = {
                 'Whip & Ring Race Children Gp 3',
                 'Baton Race Children Gp 3'
             ],
+            // Children Group 4 events (7-8 years) - Limited events as per PDF
             children_gp4: [
                 'Hacks Children Gp 4',
                 'Stick & Ball Race Children Gp 4',
@@ -176,6 +188,7 @@ const EVENT_CATEGORIES = {
                 'Whip & Ring Race Children Gp 4',
                 'Baton Race Children Gp 4'
             ],
+            // Children Group 5 events (6-7 years) - Limited events as per PDF
             children_gp5: [
                 'Hacks Children Gp 5',
                 'Stick & Ball Race Children Gp 5',
@@ -189,6 +202,7 @@ const EVENT_CATEGORIES = {
                 'Whip & Ring Race Children Gp 5',
                 'Baton Race Children Gp 5'
             ],
+            // Children Group 6 events (5-6 years) - Limited events as per PDF
             children_gp6: [
                 'Hacks Children Gp 6',
                 'Stick & Ball Race Children Gp 6',
@@ -202,6 +216,7 @@ const EVENT_CATEGORIES = {
                 'Whip & Ring Race Children Gp 6',
                 'Baton Race Children Gp 6'
             ],
+            // Children Group 7 events (4-5 years) - Limited events as per PDF
             children_gp7: [
                 'Hacks Children Gp 7',
                 'Stick & Ball Race Children Gp 7',
@@ -220,6 +235,7 @@ const EVENT_CATEGORIES = {
     tentPegging: {
         name: 'TENT PEGGING',
         events: {
+            // All tent pegging events are open category (no age restrictions mentioned in PDF)
             all: [
                 'Individual Tent Pegging - Lance',
                 'Individual Tent Pegging - Sword',
@@ -235,33 +251,39 @@ const EVENT_CATEGORIES = {
     jumping: {
         name: 'JUMPING GHS',
         events: {
+            // Children Group 1 jumping events (12-14 years)
             children_gp1: [
                 'Children Jumping Gp 1',
                 'Cross Jumps Children Gp 1',
                 'Children Jumping Fault & Out Gp 1'
             ],
+            // Children Group 2 jumping events (10-12 years)
             children_gp2: [
                 'Children Jumping Gp 2',
                 'Cross Jumps Children Gp 2',
                 'Children Jumping Fault & Out Gp 2'
             ],
+            // Children Group 3 jumping events (8-10 years)
             children_gp3: [
                 'Children Jumping Gp 3',
                 'Cross Jumps Children Gp 3',
                 'Children Jumping Fault & Out Gp 3'
             ],
+            // Junior Rider jumping events (14-18 years)
             junior_rider: [
                 'Junior Jumping',
                 'Junior Jumping Topscore',
                 'Cross Jumps Junior',
                 'Children Jumping Fault & Out Junior'
             ],
+            // Young Rider jumping events (16-21 years)
             young_rider: [
                 'Young Rider Jumping',
                 'Young Rider Jumping Topscore',
                 'Cross Jumps Young',
                 'Children Jumping Fault & Out Young Rider'
             ],
+            // Open jumping events (all age categories)
             all: [
                 'Open Jumping Topscore',
                 'Novice Jumping Normal',
@@ -271,6 +293,7 @@ const EVENT_CATEGORIES = {
         }
     }
 };
+
 
 // Competition Types
 const COMPETITION_TYPES = [
@@ -285,6 +308,7 @@ interface RiderEntry {
     efiId: string;
     dateOfBirth: string;
     age: number;
+    gender: string;
     ageCategory: string;
     ageCategoryName: string;
     selectedEvents: string[];
@@ -300,13 +324,25 @@ interface RegistrationFormProps {
     eventTitle: string;
 }
 
+interface ValidationErrors {
+    [riderId: string]: {
+        name?: string;
+        dateOfBirth?: string;
+        gender?: string;
+        competitions?: string;
+        events?: string;
+    };
+}
+
 const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClose, eventTitle }) => {
     const [riders, setRiders] = useState<RiderEntry[]>([
-        { id: '1', name: '', efiId: '', dateOfBirth: '', age: 0, ageCategory: '', ageCategoryName: '', selectedEvents: [], competitions: [] }
+        { id: '1', name: '', efiId: '', dateOfBirth: '', age: 0, gender: '', ageCategory: '', ageCategoryName: '', selectedEvents: [], competitions: [] }
     ]);
     const [parentName, setParentName] = useState('');
     const [coachName, setCoachName] = useState('');
     const [activeTab, setActiveTab] = useState<EventCategoryType>('gymkhana');
+    const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+    const [showValidationErrors, setShowValidationErrors] = useState(false);
 
     const calculateAge = (dateOfBirth: string): number => {
         if (!dateOfBirth) return 0;
@@ -332,21 +368,26 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
 
     const addRider = () => {
         const newId = (riders.length + 1).toString();
-        setRiders([...riders, { 
-            id: newId, 
-            name: '', 
-            efiId: '', 
-            dateOfBirth: '', 
-            age: 0, 
-            ageCategory: '', 
-            ageCategoryName: '', 
-            selectedEvents: [], 
-            competitions: [] 
+        setRiders([...riders, {
+            id: newId,
+            name: '',
+            efiId: '',
+            dateOfBirth: '',
+            age: 0,
+            gender: '',
+            ageCategory: '',
+            ageCategoryName: '',
+            selectedEvents: [],
+            competitions: []
         }]);
     };
 
     const removeRider = (id: string) => {
         setRiders(riders.filter(rider => rider.id !== id));
+        // Remove validation errors for removed rider
+        const newErrors = { ...validationErrors };
+        delete newErrors[id];
+        setValidationErrors(newErrors);
     };
 
     const updateRider = (id: string, field: keyof RiderEntry, value: any) => {
@@ -371,6 +412,16 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
             }
             return rider;
         }));
+
+        // Clear validation error for this field
+        if (validationErrors[id]) {
+            const newErrors = { ...validationErrors };
+            delete newErrors[id][field as keyof ValidationErrors[string]];
+            if (Object.keys(newErrors[id]).length === 0) {
+                delete newErrors[id];
+            }
+            setValidationErrors(newErrors);
+        }
     };
 
     const toggleEvent = (riderId: string, event: string) => {
@@ -397,8 +448,9 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
         }));
     };
 
-    const getAvailableEvents = (ageCategory: string, eventType: EventCategoryType): string[] => {
+    const getAvailableEvents = (rider: RiderEntry, eventType: EventCategoryType): string[] => {
         const category = EVENT_CATEGORIES[eventType];
+        const { ageCategory, gender } = rider;
 
         if (eventType === 'tentPegging') {
             return category.events.all || [];
@@ -408,22 +460,32 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
             return [];
         }
 
-        // Get events for the specific age category
+        let availableEvents: string[] = [];
+
+        // Add age-specific events
         const categoryEvents = (category.events as any)[ageCategory] || [];
+        availableEvents = [...availableEvents, ...categoryEvents];
 
-        // Add open/all age events
+        // Add open/all age events (available to everyone)
         const allAgeEvents = (category.events as any).all || [];
+        availableEvents = [...availableEvents, ...allAgeEvents];
 
-        // Add ladies events for female riders (you might want to add gender selection)
-        const ladiesEvents = (category.events as any).ladies || [];
+        // Add ladies events for female riders
+        if (gender === 'female') {
+            const ladiesEvents = (category.events as any).ladies || [];
+            availableEvents = [...availableEvents, ...ladiesEvents];
+        }
 
-        // Combine and remove duplicates
-        const combinedEvents = [...new Set([...categoryEvents, ...allAgeEvents, ...ladiesEvents])];
+        // Add senior events for riders 18+
+        if (rider.age >= 18) {
+            const seniorEvents = (category.events as any).senior || [];
+            availableEvents = [...availableEvents, ...seniorEvents];
+        }
 
-        return combinedEvents;
+        // Remove duplicates and return
+        return [...new Set(availableEvents)];
     };
 
-    // Updated calculation function: Competition Types × Events × ₹1000
     const calculateRiderTotal = (rider: RiderEntry): number => {
         const competitionCount = rider.competitions.length;
         const eventCount = rider.selectedEvents.length;
@@ -436,8 +498,67 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
         }, 0);
     };
 
+    const validateForm = (): boolean => {
+        const errors: ValidationErrors = {};
+        let hasErrors = false;
+
+        riders.forEach(rider => {
+            const riderErrors: ValidationErrors[string] = {};
+
+            // Validate required fields
+            if (!rider.name.trim()) {
+                riderErrors.name = 'Rider name is required';
+                hasErrors = true;
+            }
+
+            if (!rider.dateOfBirth) {
+                riderErrors.dateOfBirth = 'Date of birth is required';
+                hasErrors = true;
+            }
+
+            if (!rider.gender) {
+                riderErrors.gender = 'Gender selection is required';
+                hasErrors = true;
+            }
+
+            if (rider.competitions.length === 0) {
+                riderErrors.competitions = 'Please select at least one competition';
+                hasErrors = true;
+            }
+
+            if (rider.selectedEvents.length === 0) {
+                riderErrors.events = 'Please select at least one event';
+                hasErrors = true;
+            }
+
+            // Validate age category
+            if (rider.dateOfBirth && !rider.ageCategory) {
+                riderErrors.dateOfBirth = 'Age does not fall into any competition category';
+                hasErrors = true;
+            }
+
+            if (Object.keys(riderErrors).length > 0) {
+                errors[rider.id] = riderErrors;
+            }
+        });
+
+        setValidationErrors(errors);
+        setShowValidationErrors(hasErrors);
+        return !hasErrors;
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!validateForm()) {
+            // Scroll to first error
+            const firstErrorElement = document.querySelector('.border-red-300');
+            if (firstErrorElement) {
+                firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return;
+        }
+
         // Handle form submission logic here
         console.log('Registration submitted:', { riders, parentName, coachName });
         alert('Registration submitted successfully!');
@@ -480,6 +601,26 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                     </div>
 
                     <form onSubmit={handleSubmit} className="p-6">
+                        {/* Validation Error Summary */}
+                        {showValidationErrors && Object.keys(validationErrors).length > 0 && (
+                            <div className="bg-red-50 border border-red-200 p-4 rounded-lg mb-6">
+                                <div className="flex items-center mb-2">
+                                    <LuAlarmClock className="w-5 h-5 text-red-500 mr-2" />
+                                    <h3 className="text-red-800 font-medium">Please fix the following errors:</h3>
+                                </div>
+                                <ul className="text-sm text-red-700 list-disc list-inside space-y-1">
+                                    {Object.entries(validationErrors).map(([riderId, errors]) => {
+                                        const riderIndex = riders.findIndex(r => r.id === riderId);
+                                        return Object.entries(errors).map(([field, error]) => (
+                                            <li key={`${riderId}-${field}`}>
+                                                Rider #{riderIndex + 1}: {error}
+                                            </li>
+                                        ));
+                                    })}
+                                </ul>
+                            </div>
+                        )}
+
                         {/* Event Information */}
                         <div className="bg-gradient-to-r from-pink-50 to-purple-50 p-4 rounded-xl mb-6">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
@@ -499,9 +640,17 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                         </div>
 
                         {/* Add Rider Button */}
-                        <div className="flex justify-between items-center mb-6">
+                        {/* <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-semibold text-gray-800">Riders Information</h3>
-                        </div>
+                            <button
+                                type="button"
+                                onClick={addRider}
+                                className="flex items-center space-x-2 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors"
+                            >
+                                <LuPlus className="w-4 h-4" />
+                                <span>Add Rider</span>
+                            </button>
+                        </div> */}
 
                         {/* Riders Section */}
                         <div className="space-y-6">
@@ -534,271 +683,231 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                                     </div>
 
                                     {/* Basic Information */}
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                 Rider Name *
                                             </label>
                                             <input
                                                 type="text"
-                                                required
                                                 value={rider.name}
                                                 onChange={(e) => updateRider(rider.id, 'name', e.target.value)}
-                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                                className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${validationErrors[rider.id]?.name ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                                                    }`}
                                                 placeholder="Enter rider name"
                                             />
+                                            {validationErrors[rider.id]?.name && (
+                                                <p className="text-red-500 text-xs mt-1">{validationErrors[rider.id].name}</p>
+                                            )}
                                         </div>
-
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                EFI Rider ID 
+                                                EFI ID
                                             </label>
                                             <input
                                                 type="text"
                                                 value={rider.efiId}
                                                 onChange={(e) => updateRider(rider.id, 'efiId', e.target.value)}
                                                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                                                placeholder="EFI ID"
+                                                placeholder="Enter EFI ID"
                                             />
                                         </div>
-
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                 Date of Birth *
                                             </label>
                                             <input
                                                 type="date"
-                                                required
                                                 value={rider.dateOfBirth}
                                                 onChange={(e) => updateRider(rider.id, 'dateOfBirth', e.target.value)}
-                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                                                max={new Date().toISOString().split('T')[0]}
+                                                className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${validationErrors[rider.id]?.dateOfBirth ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                                                    }`}
                                             />
+                                            {validationErrors[rider.id]?.dateOfBirth && (
+                                                <p className="text-red-500 text-xs mt-1">{validationErrors[rider.id].dateOfBirth}</p>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Gender *
+                                            </label>
+                                            <select
+                                                value={rider.gender}
+                                                onChange={(e) => updateRider(rider.id, 'gender', e.target.value)}
+                                                className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${validationErrors[rider.id]?.gender ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                                                    }`}
+                                            >
+                                                <option value="">Select Gender</option>
+                                                <option value="male">Male</option>
+                                                <option value="female">Female</option>
+                                            </select>
+                                            {validationErrors[rider.id]?.gender && (
+                                                <p className="text-red-500 text-xs mt-1">{validationErrors[rider.id].gender}</p>
+                                            )}
                                         </div>
                                     </div>
 
-                                    {/* Competition Type Selection */}
+                                    {/* Competition Selection */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-3">
-                                            Competition Type * (₹1000 × Competition × Event)
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Select Competitions * (₹1000 per event per competition)
                                         </label>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                            {COMPETITION_TYPES.map(comp => (
-                                                <label key={comp.id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                        <div className={`grid grid-cols-1 md:grid-cols-3 gap-3 p-3 border rounded-lg ${validationErrors[rider.id]?.competitions ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                                            }`}>
+                                            {COMPETITION_TYPES.map((comp) => (
+                                                <label key={comp.id} className="flex items-center space-x-2 cursor-pointer">
                                                     <input
                                                         type="checkbox"
                                                         checked={rider.competitions.includes(comp.id)}
                                                         onChange={() => toggleCompetition(rider.id, comp.id)}
                                                         className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
                                                     />
-                                                    <div className="flex-1">
-                                                        <div className="font-medium">{comp.name}</div>
-                                                    </div>
+                                                    <span className="text-sm text-gray-700">{comp.name}</span>
                                                 </label>
                                             ))}
                                         </div>
+                                        {validationErrors[rider.id]?.competitions && (
+                                            <p className="text-red-500 text-xs mt-1">{validationErrors[rider.id].competitions}</p>
+                                        )}
                                     </div>
 
                                     {/* Event Selection */}
                                     {rider.ageCategory && (
                                         <div>
-                                            <div className="flex items-center justify-between mb-3">
-                                                <label className="block text-sm font-medium text-gray-700">
-                                                    Select Events
-                                                </label>
-                                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                                    {getAvailableEvents(rider.ageCategory, activeTab).length} events available
-                                                </span>
-                                            </div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Select Events *
+                                            </label>
+                                            <div className={`border rounded-lg ${validationErrors[rider.id]?.events ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                                                }`}>
+                                                {/* Event Category Tabs */}
+                                                <div className="border-b border-gray-200">
+                                                    <div className="flex">
+                                                        {Object.entries(EVENT_CATEGORIES).map(([key, category]) => (
+                                                            <button
+                                                                key={key}
+                                                                type="button"
+                                                                onClick={() => setActiveTab(key as EventCategoryType)}
+                                                                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === key
+                                                                    ? 'border-pink-500 text-pink-600 bg-pink-50'
+                                                                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                                                                    }`}
+                                                            >
+                                                                {category.name}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
 
-                                            {/* Event Category Tabs */}
-                                            <div className="flex space-x-1 mb-4 bg-gray-100 p-1 rounded-lg">
-                                                {Object.entries(EVENT_CATEGORIES).map(([key, category]) => (
-                                                    <button
-                                                        key={key}
-                                                        type="button"
-                                                        onClick={() => setActiveTab(key as EventCategoryType)}
-                                                        className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${activeTab === key
-                                                            ? 'bg-white text-pink-700 shadow-sm'
-                                                            : 'text-gray-600 hover:text-gray-900'
-                                                            }`}
-                                                    >
-                                                        {category.name}
-                                                    </button>
-                                                ))}
-                                            </div>
-
-                                            {/* Events List */}
-                                            <div className="border border-gray-200 rounded-lg p-4 max-h-64 overflow-y-auto">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                                    {getAvailableEvents(rider.ageCategory, activeTab).map(event => (
-                                                        <label key={event} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={rider.selectedEvents.includes(event)}
-                                                                onChange={() => toggleEvent(rider.id, event)}
-                                                                className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
-                                                            />
-                                                            <span className="text-sm">{event}</span>
-                                                        </label>
-                                                    ))}
-                                                    {getAvailableEvents(rider.ageCategory, activeTab).length === 0 && (
-                                                        <div className="col-span-2 text-center text-gray-500 py-4">
-                                                            No events available for this category
-                                                        </div>
+                                                {/* Event Selection */}
+                                                <div className="p-4">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                        {getAvailableEvents(rider, activeTab).map((event) => (
+                                                            <label key={event} className="flex items-center space-x-2 cursor-pointer p-2 hover:bg-gray-50 rounded">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={rider.selectedEvents.includes(event)}
+                                                                    onChange={() => toggleEvent(rider.id, event)}
+                                                                    className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
+                                                                />
+                                                                <span className="text-sm text-gray-700">{event}</span>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                    {getAvailableEvents(rider, activeTab).length === 0 && (
+                                                        <p className="text-gray-500 text-sm text-center py-4">
+                                                            No events available for this age category in {EVENT_CATEGORIES[activeTab].name}
+                                                        </p>
                                                     )}
                                                 </div>
                                             </div>
+                                            {validationErrors[rider.id]?.events && (
+                                                <p className="text-red-500 text-xs mt-1">{validationErrors[rider.id].events}</p>
+                                            )}
                                         </div>
                                     )}
 
-                                    {!rider.ageCategory && rider.dateOfBirth && (
-                                        <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
-                                            <p className="text-sm text-yellow-800">
-                                                Age {rider.age} does not fall into any competition category. Please check the date of birth.
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {!rider.dateOfBirth && (
-                                        <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
-                                            <p className="text-sm text-blue-800">
-                                                Please enter date of birth to see available events
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {/* Selected Events and Competitions Summary */}
+                                    {/* Rider Total */}
                                     {rider.competitions.length > 0 && rider.selectedEvents.length > 0 && (
-                                        <div className="bg-green-50 p-3 rounded-lg">
-                                            <p className="text-sm font-medium text-green-800 mb-1">
-                                                Fee Calculation: {rider.competitions.length} Competition(s) × {rider.selectedEvents.length} Event(s) × ₹1000 = ₹{calculateRiderTotal(rider)} + GST
-                                            </p>
-                                            <div className="text-xs text-green-600 space-y-1">
-                                                <p><strong>Competitions:</strong> {rider.competitions.map(comp => COMPETITION_TYPES.find(c => c.id === comp)?.name).join(', ')}</p>
-                                                <p><strong>Events:</strong> {rider.selectedEvents.join(', ')}</p>
+                                        <div className="bg-gray-50 p-3 rounded-lg">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm text-gray-600">
+                                                    {rider.competitions.length} competition(s) × {rider.selectedEvents.length} event(s) × ₹1000
+                                                </span>
+                                                <span className="text-lg font-semibold text-pink-600">
+                                                    ₹{calculateRiderTotal(rider).toLocaleString()}
+                                                </span>
                                             </div>
-                                        </div>
-                                    )}
-
-                                    {rider.competitions.length > 0 && rider.selectedEvents.length === 0 && (
-                                        <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
-                                            <p className="text-sm text-blue-800">
-                                                Please select events to calculate fees
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {rider.competitions.length === 0 && rider.selectedEvents.length > 0 && (
-                                        <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
-                                            <p className="text-sm text-blue-800">
-                                                Please select competitions to calculate fees
-                                            </p>
                                         </div>
                                     )}
                                 </motion.div>
                             ))}
                         </div>
 
-                        {/* Parent and Coach Information */}
-                        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Parent Name 
-                                </label>
-                                <input
-                                    type="text"
-                                    value={parentName}
-                                    onChange={(e) => setParentName(e.target.value)}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                                    placeholder="Parent's full name"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Coach Name 
-                                </label>
-                                <input
-                                    type="text"
-                                    value={coachName}
-                                    onChange={(e) => setCoachName(e.target.value)}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                                    placeholder="Coach's full name"
-                                />
+                        {/* Parent/Coach Information */}
+                        <div className="mt-8 space-y-4">
+                            <h3 className="text-xl font-semibold text-gray-800">Additional Information</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Parent/Guardian Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={parentName}
+                                        onChange={(e) => setParentName(e.target.value)}
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                        placeholder="Enter parent/guardian name"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Coach Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={coachName}
+                                        onChange={(e) => setCoachName(e.target.value)}
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                        placeholder="Enter coach name"
+                                    />
+                                </div>
                             </div>
                         </div>
 
-                        {/* Fee Summary */}
+                        {/* Total Summary */}
                         <div className="mt-8 bg-gradient-to-r from-pink-50 to-purple-50 p-6 rounded-xl">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Fee Summary</h3>
-                            <div className="space-y-3">
-                                {riders.map((rider, index) => {
-                                    const riderTotal = calculateRiderTotal(rider);
-                                    return riderTotal > 0 && (
-                                        <div key={rider.id} className="bg-white p-3 rounded-lg">
-                                            <div className="flex justify-between items-start">
-                                                <div className="flex-1">
-                                                    <div className="font-medium text-gray-800">
-                                                        {rider.name || `Rider ${index + 1}`}
-                                                    </div>
-                                                    <div className="text-sm text-gray-600 mt-1">
-                                                        {rider.competitions.length} Competition(s) × {rider.selectedEvents.length} Event(s) × ₹1000
-                                                    </div>
-                                                    <div className="text-xs text-gray-500 mt-1">
-                                                        Competitions: {rider.competitions.map(comp => 
-                                                            COMPETITION_TYPES.find(c => c.id === comp)?.name
-                                                        ).join(', ')}
-                                                    </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <div className="font-semibold text-pink-700">₹{riderTotal}</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                                
-                                {calculateTotal() === 0 && (
-                                    <div className="text-center text-gray-500 py-4">
-                                        No registrations selected yet
-                                    </div>
-                                )}
-                                
-                                {calculateTotal() > 0 && (
-                                    <div className="pt-3 mt-3 border-t border-gray-200">
-                                        <div className="flex justify-between text-xl font-bold text-pink-800">
-                                            <span>Total Amount:</span>
-                                            <span>₹{calculateTotal()} + GST</span>
-                                        </div>
-                                        <div className="text-sm text-gray-600 text-right mt-1">
-                                            (GST will be calculated at checkout)
-                                        </div>
-                                    </div>
-                                )}
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <h3 className="text-xl font-semibold text-gray-800">Total Registration Fee</h3>
+                                    <p className="text-sm text-gray-600 mt-1">
+                                        {riders.reduce((total, rider) => total + (rider.competitions.length * rider.selectedEvents.length), 0)} total entries across all riders
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-3xl font-bold text-pink-600">₹{calculateTotal().toLocaleString()} + GST</div>
+                                    {/* <div className="text-sm text-gray-600">+ GST (18%)</div> */}
+                                    {/* <div className="text-lg font-semibold text-gray-800 border-t pt-1 mt-1">
+                                        ₹{Math.round(calculateTotal() * 1.18).toLocaleString()} Total
+                                    </div> */}
+                                </div>
                             </div>
                         </div>
 
                         {/* Submit Button */}
-                        <div className="mt-8 flex items-center justify-between">
-                            <div className="text-sm text-gray-600">
-                                * All fields marked with asterisk are required
-                            </div>
-                            <div className="flex space-x-4">
-                                <button
-                                    type="button"
-                                    onClick={onClose}
-                                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="text-white bg-gradient-to-t from-[#780083] to-[#5B297A] hover:from-[#5B297A] hover:to-[#780083] rounded-md py-2 px-4 font-medium transition-all duration-200 whitespace-nowrap"
-                                >
-                                    Submit Registration
-                                </button>
-                            </div>
+                        <div className="mt-8 flex justify-end space-x-4">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                className="px-8 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg hover:from-pink-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl"
+                            >
+                                Submit Registration
+                            </button>
                         </div>
                     </form>
                 </motion.div>

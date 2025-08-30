@@ -266,7 +266,7 @@ const ContactUs = () => {
                                         placeholder="Phone Number"
                                         value={formData.phoneNumber}
                                         onChange={handleInputChange}
-                                        className={`flex-1 px-4 sm:px-5 py-2.5 rounded-r-lg text-white placeholder-gray-300 focus:outline-none transition-all duration-200 ${errors.phoneNumber
+                                        className={`flex-1 w-full px-4 sm:px-5 py-2.5 rounded-r-lg text-white placeholder-gray-300 focus:outline-none transition-all duration-200 ${errors.phoneNumber
                                             ? 'bg-gray-600 border-yellow-500 focus:border-yellow-500'
                                             : 'bg-gray-600 border-white focus:bg-opacity-50'
                                             }`}

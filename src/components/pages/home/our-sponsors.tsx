@@ -38,7 +38,7 @@ const OurSponsors = () => {
     return (
         <section id="sponsors" className="bg-white py-4 xs:py-6 sm:py-8 md:pt-10 md:pb:4 lg:pt-14 lg:pb-8 xl:pt-20 xl:pb-12">
             <div className="max-w-screen-xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
-                <h2 className="text-xl md:text-2xl lg:text-3xl xl:text-4xl text-center mb-4 xs:mb-6 sm:mb-8 md:mb-10 text-[#350D3C]">
+                <h2 className="text-3xl xl:text-5xl font-semibold text-center mb-4 xs:mb-6 sm:mb-8 md:mb-10 text-[#350D3C]">
                     Our Sponsors
                 </h2>
                 <Marquee

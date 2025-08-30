@@ -16,7 +16,7 @@ const Gallery: React.FC = () => {
 
     // Generate array of 52 images
     const generateImages = (): string[] => {
-        return Array.from({ length: 51 }, (_, i) => `${i + 1}.jpg`);
+        return Array.from({ length: 49 }, (_, i) => `${i + 1}.jpg`);
     };
 
     const images: string[] = generateImages();

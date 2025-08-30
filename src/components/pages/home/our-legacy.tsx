@@ -179,7 +179,7 @@ export default function RoyalTimeline() {
       </div>
 
       {/* Header */}
-      <h2 className="text-xl md:text-2xl lg:text-3xl xl:text-4xl text-center text-[#350D3C]">Our Legacy</h2>
+      <h2 className="text-3xl xl:text-5xl font-semibold text-center text-[#350D3C]">Our Legacy</h2>
 
       {/* Navigation Controls - bottom center */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
@@ -234,7 +234,7 @@ export default function RoyalTimeline() {
                   <h3 className="text-sm sm:text-base md:text-lg font-bold text-cardinal-pink-900 mb-1.5 sm:mb-2 leading-tight line-clamp-2">
                     {event.title}
                   </h3>
-                  <p className="text-cardinal-pink-700/80 text-xs sm:text-sm leading-relaxed line-clamp-3 font-light">
+                  <p className="text-cardinal-pink-700/80 text-xs font-medium sm:text-sm leading-relaxed line-clamp-3">
                     {event.description}
                   </p>
 
