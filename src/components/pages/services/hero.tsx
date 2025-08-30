@@ -20,7 +20,7 @@ const announcements = [
     sub_title: 'Train Like Champions',
     description:
       "Professional competition coaching for show-jumping, dressage, and endurance events. Plus corporate wellness programs featuring team-building sessions and executive coaching through horsemanship. Elevate performance both in and out of the saddle.",
-    image: "/assets/images/services/corporate.jpg",
+    image: "/assets/images/services/2.png",
     quote: 'Push your limits. Reach new heights.'
   }
 ]

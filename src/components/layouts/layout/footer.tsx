@@ -106,7 +106,7 @@ const Footer: React.FC = () => {
                                     <div className="space-y-3">
                                         <h3 className="font-semibold text-lg mb-4 opacity-90">Email</h3>
                                         <div className="flex flex-col md:flex-row md:items-center justify-center md:justify-start space-y-1 md:space-y-0 md:space-x-2">
-                                            <div className="flex items-center justify-center md:justify-start space-x-2">
+                                            <div className="flex items-center md:justify-start space-x-2">
                                                 <LuMail size={16} />
                                                 <Link href="mailto:info@equiwings.com" className={`hover:underline ${isBg ? "hover:text-gray-200" : "hover:text-[#53295a]"} transition-colors font-medium`}>
                                                     info@equiwings.com

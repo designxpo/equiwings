@@ -875,7 +875,7 @@ const ESportsComponent: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Hero Section */}
-      <div className=" py-10 relative min-h-[70vh] sm:min-h-[80vh] lg:h-screen bg-[url(/assets/images/bg-5.webp)] overflow-hidden">
+      <div className=" py-10 relative min-h-[70vh] sm:min-h-[80vh] lg:h-screen bg-[url(/assets/images/bg-2.webp)] overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white via-transparent to-transparent"></div>
           <div className="absolute bottom-0 right-0 w-full h-full bg-gradient-to-tl from-white via-transparent to-transparent"></div>
@@ -886,8 +886,8 @@ const ESportsComponent: React.FC = () => {
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold mb-4 sm:mb-5 md:mb-6 tracking-tight">
               E-Sports
             </h1>
-            <p className="text-base sm:text-lg md:text-xl max-w-3xl mx-auto opacity-90 leading-relaxed font-light">
-              Discover the timeless art of horsemanship through our distinguished equestrian program, where tradition meets modern excellence.
+            <p className="text-base sm:text-lg md:text-xl max-w-3xl font-semibold mx-auto opacity-90 leading-relaxed font-light">
+              A next-generation esports platform that brings players, fans, and brands together in one professional competitive-gaming ecosystem.It delivers organised tournaments, structured team development, and global online events, blending the high-energy spirit of traditional sports with the always-on accessibility of the digital arena.
             </p>
             <div className="mt-8 sm:mt-10 lg:mt-12 flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
               <button className="bg-white text-gray-800 px-5 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-gray-100 transition-all duration-300 flex items-center justify-center shadow-lg text-sm sm:text-base md:text-lg">

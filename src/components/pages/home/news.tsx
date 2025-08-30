@@ -15,6 +15,7 @@ interface NewsItem {
   title: string
   description: string
   image: string
+  readMoreButton: string
   createdAt: string
   isActive: boolean
 }
@@ -169,7 +170,7 @@ const News: React.FC = () => {
         whileInView="visible"
         viewport={{ once: true, amount: 0.2 }}
       >
-        <motion.h2 className="text-xl md:text-2xl lg:text-3xl xl:text-4xl text-center mb-18 text-[#350D3C]" variants={headerVariants}>
+        <motion.h2 className="text-3xl font-semibold xl:text-5xl text-center mb-18 text-[#350D3C]" variants={headerVariants}>
           News
         </motion.h2>
         <div className="flex justify-center items-center py-20">
@@ -197,7 +198,7 @@ const News: React.FC = () => {
         whileInView="visible"
         viewport={{ once: true, amount: 0.2 }}
       >
-        <motion.h2 className="text-xl md:text-2xl lg:text-3xl xl:text-4xl text-center mb-18 text-[#350D3C]" variants={headerVariants}>
+        <motion.h2 className="text-3xl font-semibold xl:text-5xl text-center mb-18 text-[#350D3C]" variants={headerVariants}>
           News
         </motion.h2>
         <div className="flex justify-center items-center py-20">
@@ -217,7 +218,7 @@ const News: React.FC = () => {
       viewport={{ once: true, amount: 0.2 }}
     >
       {/* Header */}
-      <motion.h2 className="text-xl md:text-2xl lg:text-3xl xl:text-4xl text-center mb-18 text-[#350D3C]" variants={headerVariants}>
+      <motion.h2 className="text-3xl font-semibold xl:text-5xl text-center mb-18 text-[#350D3C]" variants={headerVariants}>
         News
       </motion.h2>
 
@@ -294,7 +295,9 @@ const News: React.FC = () => {
                     >
                       {news.description}
                     </motion.p>
-                    <motion.button
+                    <motion.a
+                      href={news.readMoreButton}
+                      target={news.readMoreButton !== "" ? "_blank" : undefined}
                       className="inline-block border-2 border-cardinal-pink-900 text-cardinal-pink-900 font-semibold hover:text-white transform mx-auto px-8 py-2.5 rounded-lg transition duration-300 ease-in-out hover:bg-cardinal-pink-900 hover:cursor-pointer"
                       variants={textItemVariants}
                       whileHover={{
@@ -305,7 +308,7 @@ const News: React.FC = () => {
                       transition={{ duration: 0.2 }}
                     >
                       Read More
-                    </motion.button>
+                    </motion.a>
                   </motion.div>
                 </motion.div>
               </motion.div>

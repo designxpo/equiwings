@@ -17,7 +17,7 @@ export default function Gallery() {
 
     return (
         <section className="py-20 relative bg-[url(/assets/images/bg-2.webp)] overflow-hidden w-full bg-center bg-no-repeat bg-cover">
-            <motion.h2 className="text-xl md:text-2xl lg:text-3xl xl:text-4xl text-center text-white" variants={headerVariants}>
+            <motion.h2 className="text-3xl xl:text-5xl font-semibold text-center text-white" variants={headerVariants}>
                 Gallery
             </motion.h2>
             {/* Main Grid Container */}

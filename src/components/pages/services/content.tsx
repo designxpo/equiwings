@@ -15,10 +15,10 @@ const SportsTrainingUI = () => {
     { title: "Certification programs accredited by national equestrian bodies" },
   ];
 
-  const corporateAndWellnessProgramsData = [
-    { title: "Team-building sessions" },
-    { title: "Executive coaching through riding & horsemanship" },
-    { title: "Well-being days for employees & members" },
+  const corporateTeamBuildingData = [
+    { title: "Unique team-building sessions using horses to promote collaboration, trust, and leadership." },
+    { title: "Executive coaching workshops leveraging riding and horsemanship for personal growth." },
+    { title: "Employee wellness days focused on stress relief and experiential learning in nature." },
   ];
 
   const eventsAndCompetitionManagementData = [
@@ -30,6 +30,24 @@ const SportsTrainingUI = () => {
   const horseLeasingAndRentalSupportData = [
     { title: "Lease-and-train services for schools or private academies" },
     { title: "Horse transport, boarding & professional care included" },
+  ];
+
+  const schoolSportsOutsourcing = [
+    { title: "Turnkey outsourcing of multidisciplinary sports programs for schools, including full coaching, event management, and fitness assessments." },
+    { title: "Equipment provision and facility management to eliminate the need for in-house sports staff." },
+    { title: "Seamless integration with school timetables and holistic student development pathways." },
+  ];
+
+  const stretchYourLimitsProgramData = [
+    { title: "App-based athletics monitoring program for school students to track and enhance their sporting potential." },
+    { title: "Customized training in speed, endurance, agility, and strength with data-driven progress reports." },
+    { title: "Pathways for competition from intra-school to national levels, with a philosophy of overcoming self-limits." },
+  ];
+
+  const internationalEquestrianTourData = [
+    { title: "Organized overseas horseback riding and polo training camps with world-class coaches." },
+    { title: "Exposure tours featuring participation in global clinics, international competitions, and cultural exchange experiences." },
+    { title: "Comprehensive logistics including travel, accommodation, horse care, and skill certification." },
   ];
 
   const getIcon = (title: string) => {
@@ -47,14 +65,14 @@ const SportsTrainingUI = () => {
     }
   };
 
-  const ServiceCard = ({ title, data, image, isImageRight = false }:{ title: string, data: { title: string }[], image: string, isImageRight?: boolean}) => (
+  const ServiceCard = ({ title, data, image, isImageRight = false }: { title: string, data: { title: string }[], image: string, isImageRight?: boolean }) => (
     <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100">
       <div className="xl:flex xl:h-[500px]">
         {/* Image Section */}
         <div className={`xl:w-1/2 relative ${isImageRight ? 'xl:order-2' : 'xl:order-1'}`}>
           <div className="relative h-64 xl:h-full overflow-hidden">
-            <img 
-              src={image} 
+            <img
+              src={image}
               alt={title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
             />
@@ -67,7 +85,7 @@ const SportsTrainingUI = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Content Section */}
         <div className={`xl:w-1/2 p-6 sm:p-8 lg:p-10 xl:p-12 flex flex-col justify-between ${isImageRight ? 'xl:order-1' : 'xl:order-2'}`}>
           <div className="flex-1 flex flex-col justify-center">
@@ -79,7 +97,7 @@ const SportsTrainingUI = () => {
                 {title}
               </h2>
             </div>
-            
+
             <div className="space-y-2 sm:space-y-2 flex-1">
               {data.map((item, index) => (
                 <div key={index} className="group/item flex items-start space-x-4 rounded-xl hover:bg-gray-50 transition-all duration-300">
@@ -93,7 +111,7 @@ const SportsTrainingUI = () => {
               ))}
             </div>
           </div>
-          
+
           {/* <div className="mt-8 pt-6 border-t border-gray-100">
             <button className="group/btn inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
               <span className="font-semibold">Learn More</span>
@@ -140,12 +158,36 @@ const SportsTrainingUI = () => {
             isImageRight={true}
           />
 
+          {/* School Sports Outsourcing Section */}
+          <ServiceCard
+            title="School Sports Outsourcing"
+            data={schoolSportsOutsourcing}
+            image="/assets/images/services/1.png"
+            isImageRight={false}
+          />
+
+          {/* Stretch Your Limits Program Section */}
+          <ServiceCard
+            title="Stretch Your Limits Program"
+            data={stretchYourLimitsProgramData}
+            image="/assets/images/services/3.png"
+            isImageRight={true}
+          />
+
+          {/* International Equestrian Training & Exposure Tour Section */}
+          <ServiceCard
+            title="International Equestrian Training & Exposure Tour"
+            data={internationalEquestrianTourData}
+            image="/assets/images/services/4.png"
+            isImageRight={false}
+          />
+
           {/* Corporate & Wellness Programs Section */}
           <ServiceCard
-            title="Corporate & Wellness Programs"
-            data={corporateAndWellnessProgramsData}
-            image="/assets/images/services/corporate.jpg"
-            isImageRight={false}
+            title="Corporate Bonding Through Equestrian Experiences"
+            data={corporateTeamBuildingData}
+            image="/assets/images/services/2.png"
+            isImageRight={true}
           />
 
           {/* Events & Competition Management Section */}
@@ -153,7 +195,7 @@ const SportsTrainingUI = () => {
             title="Events & Competition Management"
             data={eventsAndCompetitionManagementData}
             image="/assets/images/services/event_mgmt.jpg"
-            isImageRight={true}
+            isImageRight={false}
           />
 
           {/* Horse Leasing & Rental Support Section */}
@@ -161,7 +203,7 @@ const SportsTrainingUI = () => {
             title="Horse Leasing & Rental Support"
             data={horseLeasingAndRentalSupportData}
             image="/assets/images/services/horse_rent.jpg"
-            isImageRight={false}
+            isImageRight={true}
           />
         </div>
       </div>

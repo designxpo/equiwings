@@ -1,8 +1,8 @@
 @import "tailwindcss";
 /* Custom Fonts - PT Serif */
 @font-face {
-  font-family: pt-serif;
-  src: url("../../public/assets/fonts/poppins/Poppins-Regular.ttf");
+  font-family: pt-arial;
+  src: url("../../public/assets/fonts/arial.ttf") format("truetype");
 }
 
 @theme {
@@ -19,8 +19,8 @@
   --color-cardinal-pink-900: #79005f;
   --color-cardinal-pink-950: #63004e;
   /* Fonts */
-  --font-pt-serif: pt-serif, "sans-serif";
-  --font-roboto: roboto, "sans-serif";
+  /* --font-pt-serif: pt-serif, "sans-serif"; */
+  --font-pt-arial: pt-arial, "sans-serif";
 }
 
 /* Custom Animations for Marquee */

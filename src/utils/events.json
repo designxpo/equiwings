@@ -30,7 +30,7 @@
             "id": "the-penta-grand-2021",
             "date": "2021",
             "title": "The Penta Grand 2021",
-            "description": "A premier equestrian championship featuring National Qualifiers, Ghaziabad Horse Show, U.P. Horse Show & NCR Inter-School Championship, held from 10 - 18 December 2022 at GHRC, Ghaziabad, uniting top teams from the Army, Police, Paramilitary, schools, and clubs nationwide.",
+            "description": "A premier equestrian championship featuring National Qualifiers, Ghaziabad Horse Show, U.P. Horse Show & NCR Inter-School Championship, held from 10 - 18 December 2021 at GHRC, Ghaziabad, uniting top teams from the Army, Police, Paramilitary, schools, and clubs nationwide.",
             "pastPrograms": true,
             "location": "Gurukul",
             "image": "/assets/images/past-events/21/6.JPG",
@@ -66,6 +66,17 @@
                 "/assets/images/past-events/13/9.JPG",
                 "/assets/images/past-events/13/10.JPG"
             ]
+        }
+    ],
+    "upcomingEvents": [
+        {
+            "id": "the-penta-grand-2023",
+            "date": "10-18 DECEMBER, 2023",
+            "title": "The Penta Grand 2023",
+            "description": "A premier equestrian championship featuring National Qualifiers, Ghaziabad Horse Show, U.P. Horse Show & NCR Inter-School Championship, held from 10 - 18 December 2023 at GHRC, Ghaziabad, uniting top teams from the Army, Police, Paramilitary, schools, and clubs nationwide.",
+            "location": "Gurukul",
+            "image": "/assets/images/upcoming-events/23/1.JPG",
+            "eventImages": []
         }
     ]
 }
