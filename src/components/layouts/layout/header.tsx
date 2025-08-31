@@ -57,31 +57,57 @@ const Header: React.FC = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
   }
 
-  // Function to handle news section navigation
+  // Enhanced function to handle news section navigation
   const handleNewsClick = (e: React.MouseEvent) => {
     e.preventDefault()
     setIsMobileMenuOpen(false) // Close mobile menu if open
     
     if (pathname === "/") {
       // If already on home page, just scroll to news section
-      setTimeout(() => {
+      const scrollToNews = () => {
         const newsSection = document.getElementById("news")
         if (newsSection) {
-          newsSection.scrollIntoView({ behavior: "smooth", block: "start" })
+          const headerHeight = 80 // Adjust based on your header height
+          const elementPosition = newsSection.offsetTop - headerHeight
+          window.scrollTo({
+            top: elementPosition,
+            behavior: "smooth"
+          })
         }
-      }, 100)
+      }
+      
+      // Small delay to ensure mobile menu is closed
+      setTimeout(scrollToNews, 100)
     } else {
-      // If on another page, navigate to home and then scroll to news
-      router.push("/")
-      // Wait for navigation to complete before scrolling
-      setTimeout(() => {
-        const newsSection = document.getElementById("news")
-        if (newsSection) {
-          newsSection.scrollIntoView({ behavior: "smooth", block: "start" })
-        }
-      }, 500)
+      // If on another page, navigate to home with hash
+      router.push("/#news")
     }
   }
+
+  // Handle scrolling when URL contains #news hash
+  useEffect(() => {
+    const handleHashScroll = () => {
+      if (window.location.hash === "#news") {
+        // Wait for page to fully render
+        setTimeout(() => {
+          const newsSection = document.getElementById("news")
+          if (newsSection) {
+            const headerHeight = 80 // Adjust based on your header height
+            const elementPosition = newsSection.offsetTop - headerHeight
+            window.scrollTo({
+              top: elementPosition,
+              behavior: "smooth"
+            })
+          }
+        }, 300)
+      }
+    }
+
+    // Check on pathname change (when navigating to home page)
+    if (pathname === "/" && window.location.hash === "#news") {
+      handleHashScroll()
+    }
+  }, [pathname])
 
   // Component for animated underline link
   const AnimatedLink = ({ href, children, className = "", onClick = () => { } }: any) => {

@@ -384,10 +384,10 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
         )
     }, [eventData, eventDates])
 
-    const getEligibleCategories = useMemo(() => {
-        return () => {
-            if (!eventData || !activeSubEvent) return []
-            const subEvent = eventData.sub_events.find((se) => se.id === activeSubEvent)
+    const getEligibleCategoriesBySubEvent = useMemo(() => {
+        return (subEventId: string) => {
+            if (!eventData) return []
+            const subEvent = eventData.sub_events.find((se) => se.id === subEventId)
             if (!subEvent) return []
 
             // Gate: require DOB & gender before showing any categories
@@ -433,17 +433,27 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                 })
             }
         }
-    }, [eventData, activeSubEvent, registrationType, riders])
+    }, [eventData, registrationType, riders])
 
-    // Prune selected categories if eligibility changes
+    // Prune selected categories if eligibility changes (across all sub-events)
     useEffect(() => {
-        const eligibleIds = new Set(getEligibleCategories().map((c) => c.id))
-        setSelectedCategories((prev) => prev.filter((id) => eligibleIds.has(id)))
-    }, [getEligibleCategories])
+        if (!eventData) return
+        const allEligibleIds = new Set<string>()
+        eventData.sub_events.forEach((se) => {
+            getEligibleCategoriesBySubEvent(se.id).forEach((c) => allEligibleIds.add(c.id))
+        })
+        setSelectedCategories((prev) => prev.filter((id) => allEligibleIds.has(id)))
+    }, [eventData, getEligibleCategoriesBySubEvent])
 
     const toggleCategory = (categoryId: string) => {
-        const eligibleIds = new Set(getEligibleCategories().map((c) => c.id))
-        if (!eligibleIds.has(categoryId)) return // prevent selecting ineligible category (guard)
+        if (!eventData) return
+        // Build the set of eligible IDs across all sub-events
+        const allEligibleIds = new Set<string>()
+        eventData.sub_events.forEach((se) => {
+            getEligibleCategoriesBySubEvent(se.id).forEach((c) => allEligibleIds.add(c.id))
+        })
+        if (!allEligibleIds.has(categoryId)) return // prevent selecting ineligible category (guard)
+
         setSelectedCategories((prev) =>
             prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId],
         )
@@ -578,27 +588,22 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
     }
 
 
-    // Add this function to get unique sub event IDs from selected categories
-    const getSubEventIdsFromSelectedCategories = useMemo(() => {
+    // Build mapping of subEventId -> selected category ids
+    const getSelectedCategoriesBySubEvent = useMemo(() => {
         return () => {
-            if (!eventData || selectedCategories.length === 0) return [];
+            if (!eventData || selectedCategories.length === 0) return [] as { subEventId: string; categoryIds: string[] }[]
 
-            const subEventIds = new Set<string>();
-
-            // Find which sub events the selected categories belong to
-            eventData.sub_events.forEach(subEvent => {
-                const hasSelectedCategory = subEvent.categories.some(category =>
-                    selectedCategories.includes(category.id)
-                );
-
-                if (hasSelectedCategory) {
-                    subEventIds.add(subEvent.id);
+            const result: { subEventId: string; categoryIds: string[] }[] = []
+            eventData.sub_events.forEach((subEvent) => {
+                const eligibleIdsInSubEvent = new Set(subEvent.categories.map((c) => c.id))
+                const categoryIds = selectedCategories.filter((id) => eligibleIdsInSubEvent.has(id))
+                if (categoryIds.length > 0) {
+                    result.push({ subEventId: subEvent.id, categoryIds })
                 }
-            });
-
-            return Array.from(subEventIds);
-        };
-    }, [eventData, selectedCategories]);
+            })
+            return result
+        }
+    }, [eventData, selectedCategories])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -619,16 +624,16 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
             formData.append("coachName", coachName)
             formData.append("totalFee", calculateTotal().toString())
 
-            // Get sub event IDs from selected categories
-            const subEventIds = getSubEventIdsFromSelectedCategories();
+            // Build subEvent/category mapping and flat subEventIds list
+            const mapping = getSelectedCategoriesBySubEvent()
+            const subEventIds = mapping.map((m) => m.subEventId)
 
-            // Add all sub event IDs as an array
-            subEventIds.forEach((subEventId, index) => {
-                formData.append(`subEventIds[${index}]`, subEventId)
-            })
-
-            selectedCategories.forEach((categoryId, index) => {
-                formData.append(`categories[${index}]`, categoryId)
+            // Add structured mapping to formData as requested: array of objects with subEventId and its categories
+            mapping.forEach((m, idx) => {
+                formData.append(`selections[${idx}][subEventId]`, m.subEventId)
+                m.categoryIds.forEach((catId, cIdx) => {
+                    formData.append(`selections[${idx}][categoryIds][${cIdx}]`, catId)
+                })
             })
 
             if (registrationType === "team") {
@@ -671,6 +676,10 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                     console.warn(`No profile image found for rider ${rider.id}`)
                 }
             })
+
+
+            console.log("Form data:", Object.fromEntries(formData))
+            
 
             await axios.post("http://localhost:5000/event-participants/register/4", formData, {
                 headers: {
@@ -789,7 +798,8 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
         )
     }
 
-    const categoriesToShow = getEligibleCategories()
+    // Show categories for the currently active sub-event, but selection persists across tabs
+    const categoriesToShow = getEligibleCategoriesBySubEvent(activeSubEvent)
     const showCategoriesGateMessage =
         (registrationType === "individual" && !isRiderInfoComplete(riders[0])) ||
         (registrationType === "team" && !areAllRidersInfoComplete(riders))

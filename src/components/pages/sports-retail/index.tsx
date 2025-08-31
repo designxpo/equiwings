@@ -700,10 +700,6 @@ const ComingSoon: React.FC = () => {
           <h2 className="text-3xl md:text-5xl text-center mb-18 text-white font-bold animate-pulse">
             Coming Soon
           </h2>
-          <p className="text-lg md:text-2xl max-w-3xl mx-auto">
-            We are working hard on building a new and improved experience for
-            you. Stay tuned for more updates.
-          </p>
         </motion.div>
       </div>
     </div>);
