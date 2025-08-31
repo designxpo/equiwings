@@ -72,7 +72,7 @@ const OurSponsors = () => {
                     direction="left"
                     className="w-full bg-primary-400 overflow-hidden py-3 xs:py-4 sm:py-6 md:py-8 xl:py-12"
                 >
-                    {Array.from({ length: 24 }).map((_, index) => (
+                    {Array.from({ length: 22 }).map((_, index) => (
                         <div
                             key={index}
                             className="inline-flex items-center mx-8 justify-center flex-shrink-0 transition-all duration-300 hover:scale-105"
