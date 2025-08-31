@@ -1,306 +1,73 @@
 "use client"
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LuX, LuPlus, LuMinus, LuUser, LuCalendar, LuTrophy, LuMapPin, LuAlarmClock } from 'react-icons/lu';
+import { LuX, LuPlus, LuMinus, LuUser, LuCalendar, LuTrophy, LuMapPin, LuAlarmClock, LuUsers, LuUserCheck, LuLoader, LuUpload, LuPhone, LuMail, LuCamera } from 'react-icons/lu';
+import axios from 'axios';
 
-// Age Categories as per EFI/FEI Rules
-const AGE_CATEGORIES = [
-    { id: 'young_rider', name: 'Young Rider', minAge: 16, maxAge: 21 },
-    { id: 'junior_rider', name: 'Junior Rider', minAge: 14, maxAge: 18 },
-    { id: 'children_gp1', name: 'Children Group I', minAge: 12, maxAge: 14 },
-    { id: 'children_gp2', name: 'Children Group II', minAge: 10, maxAge: 12 },
-    { id: 'children_gp3', name: 'Children Group III', minAge: 8, maxAge: 10 },
-    { id: 'children_gp4', name: 'Children Group IV', minAge: 7, maxAge: 8 },
-    { id: 'children_gp5', name: 'Children Group V', minAge: 6, maxAge: 7 },
-    { id: 'children_gp6', name: 'Children Group VI', minAge: 5, maxAge: 6 },
-    { id: 'children_gp7', name: 'Children Group VII', minAge: 4, maxAge: 5 },
-    { id: 'senior', name: 'Senior Rider', minAge: 18, maxAge: 100 },
-    { id: 'ladies', name: 'Ladies', minAge: 0, maxAge: 100 }, // Open for Ladies of All Age Groups
-    { id: 'all', name: 'Open', minAge: 0, maxAge: 100 } // Open for all Age Categories
-];
+// Types based on API response
+interface Category {
+    id: string;
+    category_name: string;
+    entry_type: 'individual' | 'team' | 'mixed';
+    max_size_of_team: number | null;
+    min_size_of_team: number | null;
+    age_group: string | null;
+    min_age_years: number | null;
+    max_age_years: number | null;
+    gender_restriction: string | null;
+}
 
-// Event Categories with proper age-specific events
-const EVENT_CATEGORIES = {
-    gymkhana: {
-        name: 'GYMKHANA EVENTS',
-        events: {
-            // Open events (available for all age categories)
-            all: [
-                'Open Hacks',
-                'Stick & Ball Race Open (Mounted)',
-                'Pole Bending Race Open',
-                'Ball & Bucket Race Open',
-                'Lime & Spoon Race Open',
-                'Sack Race Open',
-                'Music & Mug Race Open',
-                'Music & Mug Race Bareback Open',
-                'Balloon Bursting Race Open',
-                'Balloon Bursting Race Bareback Open',
-                'Whip & Ring Race Open',
-                'Baton Race Open',
-                'Baton Race Bareback Open',
-                'Pole Bending Race Bareback',
-                'Trot Carrot Cutting Race Open',
-                'Trot Carrot & Peg Race Open',
-                'Trot Rings & Peg Open',
-                'Trot Tent Pegging Lance Open',
-                'Trot Paired Tent Pegging Lance Open',
-                'Trot Paired Tent Pegging Sword Open',
-                'Trot Tent Pegging Individual Sword Open'
-            ],
-            // Ladies events (open for ladies of all age groups)
-            ladies: [
-                'Ladies Hacks',
-                'Stick & Ball Race Ladies',
-                'Pole Bending Race Ladies',
-                'Ball & Bucket Race Ladies',
-                'Lime & Spoon Race Ladies',
-                'Sack Race Ladies',
-                'Boot & Hay Race Ladies',
-                'Music & Mug Race Ladies',
-                'Balloon Bursting Race Ladies',
-                'Whip & Ring Race Ladies',
-                'Baton Race Ladies',
-                'Trot Carrot Cutting Race Ladies',
-                'Trot Carrot & Peg Race Ladies',
-                'Trot Rings & Peg Ladies',
-                'Trot Tent Pegging Lance Ladies',
-                'Trot Paired Tent Pegging Lance Ladies',
-                'Trot Paired Tent Pegging Sword Ladies',
-                'Trot Tent Pegging Individual Sword Ladies'
-            ],
-            // Senior Rider events (Above 18 Years)
-            senior: [
-                'Hacks Senior Rider',
-                'Stick & Ball Race Senior Rider',
-                'Pole Bending Race Senior',
-                'Ball & Bucket Race Senior'
-            ],
-            // Young Rider events (16-21 years)
-            young_rider: [
-                'Hacks Young Rider',
-                'Stick & Ball Race Young Rider',
-                'Pole Bending Race Young Rider',
-                'Ball & Bucket Race Young Rider',
-                'Lime & Spoon Race Young Rider',
-                'Sack Race Young Rider',
-                'Boot & Hay Race Young Rider',
-                'Music & Mug Race Young Rider',
-                'Balloon Bursting Race Young Rider',
-                'Whip & Ring Race Young Rider',
-                'Baton Race Young Rider',
-                'Trot Carrot Cutting Race Young Rider',
-                'Trot Carrot & Peg Race Young Rider',
-                'Trot Rings & Peg Young Rider',
-                'Trot Tent Pegging Lance Young Rider',
-                'Trot Paired Tent Pegging Lance Young Rider',
-                'Trot Paired Tent Pegging Sword Young Rider',
-                'Trot Tent Pegging Individual Sword Young Rider'
-            ],
-            // Junior Rider events (14-18 years)
-            junior_rider: [
-                'Hacks Junior Rider',
-                'Stick & Ball Race Junior Rider',
-                'Pole Bending Race Junior Rider',
-                'Ball & Bucket Race Junior Rider',
-                'Lime & Spoon Race Junior Rider',
-                'Sack Race Junior Rider',
-                'Boot & Hay Race Junior Rider',
-                'Music & Mug Race Junior Rider',
-                'Balloon Bursting Race Junior Rider',
-                'Whip & Ring Race Junior Rider',
-                'Baton Race Junior Rider',
-                'Trot Carrot Cutting Race Junior Rider',
-                'Trot Carrot & Peg Race Junior Rider',
-                'Trot Rings & Peg Junior Rider',
-                'Trot Tent Pegging Lance Junior Rider',
-                'Trot Paired Tent Pegging Lance Junior Rider',
-                'Trot Paired Tent Pegging Sword Junior Rider',
-                'Trot Tent Pegging Individual Sword Junior Rider'
-            ],
-            // Children Group 1 events (12-14 years)
-            children_gp1: [
-                'Hacks Children Gp 1',
-                'Stick & Ball Race Children Gp 1',
-                'Pole Bending Race Children Gp 1',
-                'Ball & Bucket Race Children Gp 1',
-                'Lime & Spoon Race Children Gp 1',
-                'Sack Race Children Gp 1',
-                'Boot & Hay Race Children Gp 1',
-                'Music & Mug Race Children Gp 1',
-                'Balloon Bursting Race Children Gp 1',
-                'Whip & Ring Race Children Gp 1',
-                'Baton Race Children Gp 1',
-                'Trot Carrot Cutting Race Children Gp 1',
-                'Trot Carrot & Peg Race Children Group 1',
-                'Trot Rings & Peg Children Gp 1',
-                'Trot Tent Pegging Individual Lance Gp 1',
-                'Trot Paired Tent Pegging Lance Children Gp 1',
-                'Trot Paired Tent Pegging Sword Children Gp 1',
-                'Trot Tent Pegging Individual Sword Gp 1'
-            ],
-            // Children Group 2 events (10-12 years)
-            children_gp2: [
-                'Hacks Children Gp 2',
-                'Stick & Ball Race Children Gp 2',
-                'Pole Bending Race Children Gp 2',
-                'Ball & Bucket Race Children Gp 2',
-                'Lime & Spoon Race Children Gp 2',
-                'Sack Race Children Gp 2',
-                'Boot & Hay Race Children Gp 2',
-                'Music & Mug Race Children Gp 2',
-                'Balloon Bursting Race Children Gp 2',
-                'Whip & Ring Race Children Gp 2',
-                'Baton Race Children Gp 2',
-                'Trot Carrot Cutting Race Children Gp 2',
-                'Trot Carrot & Peg Race Children Group 2',
-                'Trot Rings & Peg Children Gp 2',
-                'Trot Tent Pegging Lance Individual Gp 2',
-                'Trot Paired Tent Pegging Lance Children Gp 2',
-                'Trot Paired Tent Pegging Sword Children Gp 2',
-                'Trot Tent Pegging Individual Sword Gp 2'
-            ],
-            // Children Group 3 events (8-10 years) - Limited events as per PDF
-            children_gp3: [
-                'Hacks Children Gp 3',
-                'Stick & Ball Race Children Gp 3',
-                'Pole Bending Race Children Gp 3',
-                'Ball & Bucket Race Children Gp 3',
-                'Lime & Spoon Race Children Gp 3',
-                'Sack Race Children Gp 3',
-                'Boot & Hay Race Children Gp 3',
-                'Music & Mug Race Children Gp 3',
-                'Balloon Bursting Race Children Gp 3',
-                'Whip & Ring Race Children Gp 3',
-                'Baton Race Children Gp 3'
-            ],
-            // Children Group 4 events (7-8 years) - Limited events as per PDF
-            children_gp4: [
-                'Hacks Children Gp 4',
-                'Stick & Ball Race Children Gp 4',
-                'Pole Bending Race Children Gp 4',
-                'Ball & Bucket Race Children Gp 4',
-                'Lime & Spoon Race Children Gp 4',
-                'Sack Race Children Gp 4',
-                'Boot & Hay Race Children Gp 4',
-                'Music & Mug Race Children Gp 4',
-                'Balloon Bursting Race Children Gp 4',
-                'Whip & Ring Race Children Gp 4',
-                'Baton Race Children Gp 4'
-            ],
-            // Children Group 5 events (6-7 years) - Limited events as per PDF
-            children_gp5: [
-                'Hacks Children Gp 5',
-                'Stick & Ball Race Children Gp 5',
-                'Pole Bending Race Children Gp 5',
-                'Ball & Bucket Race Children Gp 5',
-                'Lime & Spoon Race Children Gp 5',
-                'Sack Race Children Gp 5',
-                'Boot & Hay Race Children Gp 5',
-                'Music & Mug Race Children Gp 5',
-                'Balloon Bursting Race Children Gp 5',
-                'Whip & Ring Race Children Gp 5',
-                'Baton Race Children Gp 5'
-            ],
-            // Children Group 6 events (5-6 years) - Limited events as per PDF
-            children_gp6: [
-                'Hacks Children Gp 6',
-                'Stick & Ball Race Children Gp 6',
-                'Pole Bending Race Children Gp 6',
-                'Ball & Bucket Race Children Gp 6',
-                'Lime & Spoon Race Children Gp 6',
-                'Sack Race Children Gp 6',
-                'Boot & Hay Race Children Gp 6',
-                'Music & Mug Race Children Gp 6',
-                'Balloon Bursting Race Children Gp 6',
-                'Whip & Ring Race Children Gp 6',
-                'Baton Race Children Gp 6'
-            ],
-            // Children Group 7 events (4-5 years) - Limited events as per PDF
-            children_gp7: [
-                'Hacks Children Gp 7',
-                'Stick & Ball Race Children Gp 7',
-                'Pole Bending Race Children Gp 7',
-                'Ball & Bucket Race Children Gp 7',
-                'Lime & Spoon Race Children Gp 7',
-                'Sack Race Children Gp 7',
-                'Boot & Hay Race Children Gp 7',
-                'Music & Mug Race Children Gp 7',
-                'Balloon Bursting Race Children Gp 7',
-                'Whip & Ring Race Children Gp 7',
-                'Baton Race Children Gp 7'
-            ]
-        }
-    },
-    tentPegging: {
-        name: 'TENT PEGGING',
-        events: {
-            // All tent pegging events are open category (no age restrictions mentioned in PDF)
-            all: [
-                'Individual Tent Pegging - Lance',
-                'Individual Tent Pegging - Sword',
-                'Paired Tent Pegging',
-                'Individual Rings & Peg',
-                'Individual Lemons & Peg',
-                'Team Tent Pegging Lance',
-                'Team Tent Pegging Sword',
-                'Indian File'
-            ]
-        }
-    },
-    jumping: {
-        name: 'JUMPING GHS',
-        events: {
-            // Children Group 1 jumping events (12-14 years)
-            children_gp1: [
-                'Children Jumping Gp 1',
-                'Cross Jumps Children Gp 1',
-                'Children Jumping Fault & Out Gp 1'
-            ],
-            // Children Group 2 jumping events (10-12 years)
-            children_gp2: [
-                'Children Jumping Gp 2',
-                'Cross Jumps Children Gp 2',
-                'Children Jumping Fault & Out Gp 2'
-            ],
-            // Children Group 3 jumping events (8-10 years)
-            children_gp3: [
-                'Children Jumping Gp 3',
-                'Cross Jumps Children Gp 3',
-                'Children Jumping Fault & Out Gp 3'
-            ],
-            // Junior Rider jumping events (14-18 years)
-            junior_rider: [
-                'Junior Jumping',
-                'Junior Jumping Topscore',
-                'Cross Jumps Junior',
-                'Children Jumping Fault & Out Junior'
-            ],
-            // Young Rider jumping events (16-21 years)
-            young_rider: [
-                'Young Rider Jumping',
-                'Young Rider Jumping Topscore',
-                'Cross Jumps Young',
-                'Children Jumping Fault & Out Young Rider'
-            ],
-            // Open jumping events (all age categories)
-            all: [
-                'Open Jumping Topscore',
-                'Novice Jumping Normal',
-                'Open Jumping Fault & Out',
-                'Open Jumping Novice'
-            ]
-        }
-    }
-};
+interface SubEvent {
+    id: string;
+    name: string;
+    category_ids: string[];
+    categories: Category[];
+}
 
+interface Competition {
+    id: string;
+    name: string;
+    image_url: string | null;
+    start_date: string;
+    end_date: string;
+}
 
-// Competition Types
-const COMPETITION_TYPES = [
-    { id: 'ghs', name: 'GHS (Ghaziabad Horse Show)' },
-    { id: 'ncr', name: 'NCR (Inter School)' },
-    { id: 'uphs', name: 'UPHS (U.P. Horse Show)' }
-];
+interface EventData {
+    id: string;
+    event_name: string;
+    event_code: string;
+    event_type_id: string;
+    sanctioning_body: string;
+    start_date: string;
+    end_date: string;
+    venue_location: string;
+    description: string;
+    registration_open_date: string;
+    registration_close_date: string;
+    max_entries_per_category: number | null;
+    organizers: any[];
+    event_status: string;
+    series: any;
+    default_discipline: any;
+    rules_document_url: string;
+    prize_money_total: string;
+    entry_fee_structure: any;
+    is_active: boolean;
+    created_by: string;
+    created_at: string;
+    updated_at: string;
+    competitions: Competition[];
+    sub_events: SubEvent[];
+}
+
+interface ApiResponse {
+    success: boolean;
+    message: string;
+    data: {
+        event: EventData;
+    };
+    timestamp: string;
+}
 
 interface RiderEntry {
     id: string;
@@ -310,18 +77,17 @@ interface RiderEntry {
     age: number;
     gender: string;
     ageCategory: string;
-    ageCategoryName: string;
-    selectedEvents: string[];
     competitions: string[];
+    phone: string;
+    email: string;
+    profileImage: File | null;
+    profileImagePreview: string;
 }
-
-type EventCategoryType = 'gymkhana' | 'tentPegging' | 'jumping';
-type AgeCategoryKey = 'all' | 'ladies' | 'senior' | 'young_rider' | 'junior_rider' | 'children_gp1' | 'children_gp2' | 'children_gp3' | 'children_gp4' | 'children_gp5' | 'children_gp6' | 'children_gp7';
 
 interface RegistrationFormProps {
     isOpen: boolean;
     onClose: () => void;
-    eventTitle: string;
+    eventId: string;
 }
 
 interface ValidationErrors {
@@ -330,19 +96,74 @@ interface ValidationErrors {
         dateOfBirth?: string;
         gender?: string;
         competitions?: string;
-        events?: string;
+        phone?: string;
+        email?: string;
+        profileImage?: string;
     };
+    team?: any;
 }
 
-const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClose, eventTitle }) => {
+const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClose, eventId }) => {
+    const [eventData, setEventData] = useState<EventData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [registrationType, setRegistrationType] = useState<'individual' | 'team'>('individual');
+    const [teamName, setTeamName] = useState('');
     const [riders, setRiders] = useState<RiderEntry[]>([
-        { id: '1', name: '', efiId: '', dateOfBirth: '', age: 0, gender: '', ageCategory: '', ageCategoryName: '', selectedEvents: [], competitions: [] }
+        {
+            id: '1',
+            name: '',
+            efiId: '',
+            dateOfBirth: '',
+            age: 0,
+            gender: '',
+            ageCategory: '',
+            competitions: [],
+            phone: '',
+            email: '',
+            profileImage: null,
+            profileImagePreview: ''
+        }
     ]);
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [parentName, setParentName] = useState('');
     const [coachName, setCoachName] = useState('');
-    const [activeTab, setActiveTab] = useState<EventCategoryType>('gymkhana');
+    const [activeSubEvent, setActiveSubEvent] = useState<string>('');
     const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
     const [showValidationErrors, setShowValidationErrors] = useState(false);
+    const [teamCompetitions, setTeamCompetitions] = useState<string[]>([]);
+    const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchEventData();
+        }
+    }, [isOpen, eventId]);
+
+    const fetchEventData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await axios.get<ApiResponse>(`http://localhost:5000/event-participants/register/4`);
+
+            if (response.data.success) {
+                setEventData(response.data.data.event);
+
+                // Set the first sub-event as active by default
+                if (response.data.data.event.sub_events.length > 0) {
+                    setActiveSubEvent(response.data.data.event.sub_events[0].id);
+                }
+            } else {
+                setError('Failed to fetch event data');
+            }
+        } catch (err) {
+            setError('Error fetching event data');
+            console.error('Error fetching event data:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const calculateAge = (dateOfBirth: string): number => {
         if (!dateOfBirth) return 0;
@@ -357,13 +178,32 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
         return age;
     };
 
-    const getAgeCategory = (age: number) => {
-        for (const category of AGE_CATEGORIES) {
-            if (age >= category.minAge && age <= category.maxAge) {
-                return { id: category.id, name: category.name };
-            }
-        }
-        return { id: '', name: '' };
+    const getAgeCategoryForRider = (age: number, gender: string): string => {
+        if (!eventData) return '';
+
+        // Find all categories that match the rider's age and gender
+        const matchingCategories: string[] = [];
+
+        eventData.sub_events.forEach(subEvent => {
+            subEvent.categories.forEach(category => {
+                // Check if category matches rider's age
+                const minAge = category.min_age_years || 0;
+                const maxAge = category.max_age_years || 100;
+
+                // Check if category matches rider's gender
+                const genderMatch = !category.gender_restriction ||
+                    category.gender_restriction === 'mixed' ||
+                    category.gender_restriction === gender;
+
+                if (age >= minAge && age <= maxAge && genderMatch) {
+                    matchingCategories.push(category.id);
+                }
+            });
+        });
+
+        // For simplicity, return the first matching category ID
+        // In a real application, you might want to handle multiple matches differently
+        return matchingCategories[0] || '';
     };
 
     const addRider = () => {
@@ -376,9 +216,11 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
             age: 0,
             gender: '',
             ageCategory: '',
-            ageCategoryName: '',
-            selectedEvents: [],
-            competitions: []
+            competitions: [],
+            phone: '',
+            email: '',
+            profileImage: null,
+            profileImagePreview: ''
         }]);
     };
 
@@ -398,13 +240,21 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                 // If date of birth is updated, calculate age and age category
                 if (field === 'dateOfBirth') {
                     const age = calculateAge(value);
-                    const ageCategory = getAgeCategory(age);
+                    const ageCategory = getAgeCategoryForRider(age, rider.gender);
                     updatedRider = {
                         ...updatedRider,
                         age,
-                        ageCategory: ageCategory.id,
-                        ageCategoryName: ageCategory.name,
-                        selectedEvents: [] // Clear selected events when age category changes
+                        ageCategory
+                    };
+                }
+
+                // If gender is updated, recalculate age category
+                if (field === 'gender' && rider.dateOfBirth) {
+                    const age = calculateAge(rider.dateOfBirth);
+                    const ageCategory = getAgeCategoryForRider(age, value);
+                    updatedRider = {
+                        ...updatedRider,
+                        ageCategory
                     };
                 }
 
@@ -424,72 +274,127 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
         }
     };
 
-    const toggleEvent = (riderId: string, event: string) => {
-        setRiders(riders.map(rider => {
-            if (rider.id === riderId) {
-                const selectedEvents = rider.selectedEvents.includes(event)
-                    ? rider.selectedEvents.filter(e => e !== event)
-                    : [...rider.selectedEvents, event];
-                return { ...rider, selectedEvents };
+    const handleImageUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // Check file type
+            if (!file.type.startsWith('image/')) {
+                setValidationErrors(prev => ({
+                    ...prev,
+                    [id]: {
+                        ...prev[id],
+                        profileImage: 'Please upload an image file'
+                    }
+                }));
+                return;
             }
-            return rider;
-        }));
+
+            // Check file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                setValidationErrors(prev => ({
+                    ...prev,
+                    [id]: {
+                        ...prev[id],
+                        profileImage: 'Image must be less than 5MB'
+                    }
+                }));
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                updateRider(id, 'profileImagePreview', e.target?.result);
+            };
+            reader.readAsDataURL(file);
+
+            updateRider(id, 'profileImage', file);
+
+            // Clear validation error
+            if (validationErrors[id]?.profileImage) {
+                const newErrors = { ...validationErrors };
+                delete newErrors[id].profileImage;
+                if (Object.keys(newErrors[id]).length === 0) {
+                    delete newErrors[id];
+                }
+                setValidationErrors(newErrors);
+            }
+        }
     };
 
-    const toggleCompetition = (riderId: string, competition: string) => {
-        setRiders(riders.map(rider => {
-            if (rider.id === riderId) {
-                const competitions = rider.competitions.includes(competition)
-                    ? rider.competitions.filter(c => c !== competition)
-                    : [...rider.competitions, competition];
+    const triggerImageUpload = (id: string) => {
+        if (fileInputRefs.current[id]) {
+            fileInputRefs.current[id]?.click();
+        }
+    };
+
+    const toggleCategory = (categoryId: string) => {
+        setSelectedCategories(prevCategories =>
+            prevCategories.includes(categoryId)
+                ? prevCategories.filter(id => id !== categoryId)
+                : [...prevCategories, categoryId]
+        );
+
+        // Clear category validation error
+        if (validationErrors.team?.categories) {
+            const newErrors = { ...validationErrors };
+            delete newErrors.team?.categories;
+            if (newErrors.team && Object.keys(newErrors.team).length === 0) {
+                delete newErrors.team;
+            }
+            setValidationErrors(newErrors);
+        }
+    };
+
+    const toggleCompetition = (competitionId: string) => {
+        if (registrationType === 'team') {
+            setTeamCompetitions(prev =>
+                prev.includes(competitionId)
+                    ? prev.filter(c => c !== competitionId)
+                    : [...prev, competitionId]
+            );
+        } else {
+            // For individual registration, update the specific rider
+            setRiders(riders.map(rider => {
+                const competitions = rider.competitions.includes(competitionId)
+                    ? rider.competitions.filter(c => c !== competitionId)
+                    : [...rider.competitions, competitionId];
                 return { ...rider, competitions };
-            }
-            return rider;
-        }));
+            }));
+        }
     };
 
-    const getAvailableEvents = (rider: RiderEntry, eventType: EventCategoryType): string[] => {
-        const category = EVENT_CATEGORIES[eventType];
-        const { ageCategory, gender } = rider;
+    const getAvailableCategories = (): Category[] => {
+        if (!eventData || !activeSubEvent) return [];
 
-        if (eventType === 'tentPegging') {
-            return category.events.all || [];
+        const subEvent = eventData.sub_events.find(se => se.id === activeSubEvent);
+        if (!subEvent) return [];
+
+        // For team registration, filter categories that allow teams
+        if (registrationType === 'team') {
+            return subEvent.categories.filter(cat =>
+                cat.entry_type === 'team' || cat.entry_type === 'mixed'
+            );
         }
 
-        if (!ageCategory) {
-            return [];
-        }
-
-        let availableEvents: string[] = [];
-
-        // Add age-specific events
-        const categoryEvents = (category.events as any)[ageCategory] || [];
-        availableEvents = [...availableEvents, ...categoryEvents];
-
-        // Add open/all age events (available to everyone)
-        const allAgeEvents = (category.events as any).all || [];
-        availableEvents = [...availableEvents, ...allAgeEvents];
-
-        // Add ladies events for female riders
-        if (gender === 'female') {
-            const ladiesEvents = (category.events as any).ladies || [];
-            availableEvents = [...availableEvents, ...ladiesEvents];
-        }
-
-        // Add senior events for riders 18+
-        if (rider.age >= 18) {
-            const seniorEvents = (category.events as any).senior || [];
-            availableEvents = [...availableEvents, ...seniorEvents];
-        }
-
-        // Remove duplicates and return
-        return [...new Set(availableEvents)];
+        // For individual registration, filter categories that allow individuals
+        return subEvent.categories.filter(cat =>
+            cat.entry_type === 'individual' || cat.entry_type === 'mixed'
+        );
     };
 
     const calculateRiderTotal = (rider: RiderEntry): number => {
-        const competitionCount = rider.competitions.length;
-        const eventCount = rider.selectedEvents.length;
-        return competitionCount * eventCount * 1000;
+        if (!eventData) return 0;
+
+        const competitionCount = registrationType === 'team'
+            ? teamCompetitions.length
+            : rider.competitions.length;
+
+        const categoryCount = selectedCategories.length;
+
+        // Default fee if not specified in API
+        const baseFee = 1000;
+
+        return competitionCount * categoryCount * baseFee;
     };
 
     const calculateTotal = () => {
@@ -501,6 +406,45 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
     const validateForm = (): boolean => {
         const errors: ValidationErrors = {};
         let hasErrors = false;
+
+        // Validate team name if team registration
+        if (registrationType === 'team') {
+            const teamErrors: { name?: string; categories?: string } = {};
+
+            if (!teamName.trim()) {
+                teamErrors.name = 'Team name is required';
+                hasErrors = true;
+            }
+
+            if (selectedCategories.length === 0) {
+                teamErrors.categories = 'Please select at least one category';
+                hasErrors = true;
+            }
+
+            if (teamCompetitions.length === 0) {
+                teamErrors.categories = 'Please select at least one competition';
+                hasErrors = true;
+            }
+
+            if (Object.keys(teamErrors).length > 0) {
+                errors.team = teamErrors;
+            }
+
+            // Validate team size
+            const availableCategories = getAvailableCategories();
+            const selectedCategory = availableCategories.find(cat => selectedCategories.includes(cat.id));
+
+            if (selectedCategory) {
+                const minSize = selectedCategory.min_size_of_team || 2;
+                const maxSize = selectedCategory.max_size_of_team || 4;
+
+                if (riders.length < minSize || riders.length > maxSize) {
+                    if (!errors.team) errors.team = {};
+                    errors.team.categories = `Team must have between ${minSize} and ${maxSize} members for this category`;
+                    hasErrors = true;
+                }
+            }
+        }
 
         riders.forEach(rider => {
             const riderErrors: ValidationErrors[string] = {};
@@ -521,13 +465,22 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                 hasErrors = true;
             }
 
-            if (rider.competitions.length === 0) {
-                riderErrors.competitions = 'Please select at least one competition';
+            if (!rider.phone.trim()) {
+                riderErrors.phone = 'Phone number is required';
                 hasErrors = true;
             }
 
-            if (rider.selectedEvents.length === 0) {
-                riderErrors.events = 'Please select at least one event';
+            if (!rider.email.trim()) {
+                riderErrors.email = 'Email is required';
+                hasErrors = true;
+            } else if (!/\S+@\S+\.\S+/.test(rider.email)) {
+                riderErrors.email = 'Email is invalid';
+                hasErrors = true;
+            }
+
+            // For individual registration, validate competitions
+            if (registrationType === 'individual' && rider.competitions.length === 0) {
+                riderErrors.competitions = 'Please select at least one competition';
                 hasErrors = true;
             }
 
@@ -542,12 +495,19 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
             }
         });
 
+        // For individual registration, validate categories
+        if (registrationType === 'individual' && selectedCategories.length === 0) {
+            if (!errors.team) errors.team = {};
+            errors.team.categories = 'Please select at least one category';
+            hasErrors = true;
+        }
+
         setValidationErrors(errors);
         setShowValidationErrors(hasErrors);
         return !hasErrors;
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!validateForm()) {
@@ -559,13 +519,180 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
             return;
         }
 
-        // Handle form submission logic here
-        console.log('Registration submitted:', { riders, parentName, coachName });
-        alert('Registration submitted successfully!');
-        onClose();
+        setSubmitting(true);
+
+        try {
+            // Prepare FormData for submission with files
+            const formData = new FormData();
+
+            // Add registration data
+            formData.append('registrationType', registrationType);
+            formData.append('teamName', registrationType === 'team' ? teamName : '');
+            formData.append('parentName', parentName);
+            formData.append('coachName', coachName);
+            formData.append('totalFee', calculateTotal().toString());
+
+            // Add categories
+            selectedCategories.forEach((categoryId, index) => {
+                formData.append(`categories[${index}]`, categoryId);
+            });
+
+            // Add competitions
+            if (registrationType === 'team') {
+                teamCompetitions.forEach((competitionId, index) => {
+                    formData.append(`competitions[${index}]`, competitionId);
+                });
+            }
+
+            // Add riders
+            riders.forEach((rider, riderIndex) => {
+                formData.append(`riders[${riderIndex}][name]`, rider.name);
+                formData.append(`riders[${riderIndex}][efiId]`, rider.efiId);
+                formData.append(`riders[${riderIndex}][dateOfBirth]`, rider.dateOfBirth);
+                formData.append(`riders[${riderIndex}][gender]`, rider.gender);
+                formData.append(`riders[${riderIndex}][ageCategory]`, rider.ageCategory);
+                formData.append(`riders[${riderIndex}][phone]`, rider.phone);
+                formData.append(`riders[${riderIndex}][password]`, "Ravi@001");
+                formData.append(`riders[${riderIndex}][email]`, rider.email);
+
+                // Add individual competitions for individual registration
+                if (registrationType === 'individual') {
+                    rider.competitions.forEach((competitionId, compIndex) => {
+                        formData.append(`riders[${riderIndex}][competitions][${compIndex}]`, competitionId);
+                    });
+                }
+
+                // Add profile image if available
+                if (rider.profileImage) {
+                    formData.append(`riders[${riderIndex}][profileImage]`, rider.profileImage);
+                }
+            });
+
+            console.log('FormData:', Object.fromEntries(formData));
+
+            const response = await axios.post('http://localhost:5000/event-participants/register/4', formData, {
+
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            if (response.data.success) {
+                alert('Registration submitted successfully!');
+                onClose();
+            } else {
+                throw new Error(response.data.message || 'Registration failed');
+            }
+        } catch (err: any) {
+            console.error('Registration error:', err);
+            setError(err.response?.data?.message || 'Registration failed. Please try again.');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
+    // Reset form when registration type changes
+    useEffect(() => {
+        if (registrationType === 'individual') {
+            setRiders([
+                {
+                    id: '1',
+                    name: '',
+                    efiId: '',
+                    dateOfBirth: '',
+                    age: 0,
+                    gender: '',
+                    ageCategory: '',
+                    competitions: [],
+                    phone: '',
+                    email: '',
+                    profileImage: null,
+                    profileImagePreview: ''
+                }
+            ]);
+            setTeamName('');
+            setTeamCompetitions([]);
+        } else {
+            setRiders([
+                {
+                    id: '1',
+                    name: '',
+                    efiId: '',
+                    dateOfBirth: '',
+                    age: 0,
+                    gender: '',
+                    ageCategory: '',
+                    competitions: [],
+                    phone: '',
+                    email: '',
+                    profileImage: null,
+                    profileImagePreview: ''
+                },
+                {
+                    id: '2',
+                    name: '',
+                    efiId: '',
+                    dateOfBirth: '',
+                    age: 0,
+                    gender: '',
+                    ageCategory: '',
+                    competitions: [],
+                    phone: '',
+                    email: '',
+                    profileImage: null,
+                    profileImagePreview: ''
+                }
+            ]);
+        }
+        setSelectedCategories([]);
+    }, [registrationType]);
+
     if (!isOpen) return null;
+
+    if (loading) {
+        return (
+            <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+                <div className="bg-white rounded-2xl p-8 flex flex-col items-center">
+                    <LuLoader className="w-8 h-8 animate-spin text-pink-600 mb-4" />
+                    <p className="text-gray-600">Loading event data...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+                <div className="bg-white rounded-2xl p-8 max-w-md text-center">
+                    <h3 className="text-xl font-bold text-red-600 mb-2">Error</h3>
+                    <p className="text-gray-600 mb-4">{error}</p>
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700"
+                    >
+                        Close
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (!eventData) {
+        return (
+            <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+                <div className="bg-white rounded-2xl p-8 max-w-md text-center">
+                    <h3 className="text-xl font-bold text-red-600 mb-2">Error</h3>
+                    <p className="text-gray-600 mb-4">No event data available</p>
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700"
+                    >
+                        Close
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <AnimatePresence>
@@ -588,8 +715,8 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                         <div className="flex items-center justify-between">
                             <div>
                                 <h2 className="text-3xl font-bold text-pink-800">Registration Form</h2>
-                                <p className="text-gray-600 mt-1">Ghaziabad Horse Show/NCR Inter School/U.P.H.S 2025</p>
-                                <p className="text-sm text-pink-600 font-medium">{eventTitle}</p>
+                                <p className="text-gray-600 mt-1">{eventData.event_name}</p>
+                                <p className="text-sm text-pink-600 font-medium">{eventData.venue_location}</p>
                             </div>
                             <button
                                 onClick={onClose}
@@ -601,6 +728,71 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                     </div>
 
                     <form onSubmit={handleSubmit} className="p-6">
+                        {/* Registration Type Selection */}
+                        <div className="mb-8">
+                            <h3 className="text-xl font-semibold text-gray-800 mb-4">Registration Type</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div
+                                    className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${registrationType === 'individual'
+                                        ? 'border-pink-500 bg-pink-50'
+                                        : 'border-gray-200 hover:border-pink-300'
+                                        }`}
+                                    onClick={() => setRegistrationType('individual')}
+                                >
+                                    <div className="flex items-center">
+                                        <div className={`p-3 rounded-lg ${registrationType === 'individual' ? 'bg-pink-100 text-pink-600' : 'bg-gray-100 text-gray-600'}`}>
+                                            <LuUserCheck className="w-6 h-6" />
+                                        </div>
+                                        <div className="ml-4">
+                                            <h4 className="font-medium text-gray-800">Individual</h4>
+                                            <p className="text-sm text-gray-600 mt-1">
+                                                Register as an individual competitor
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div
+                                    className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${registrationType === 'team'
+                                        ? 'border-pink-500 bg-pink-50'
+                                        : 'border-gray-200 hover:border-pink-300'
+                                        }`}
+                                    onClick={() => setRegistrationType('team')}
+                                >
+                                    <div className="flex items-center">
+                                        <div className={`p-3 rounded-lg ${registrationType === 'team' ? 'bg-pink-100 text-pink-600' : 'bg-gray-100 text-gray-600'}`}>
+                                            <LuUsers className="w-6 h-6" />
+                                        </div>
+                                        <div className="ml-4">
+                                            <h4 className="font-medium text-gray-800">Team</h4>
+                                            <p className="text-sm text-gray-600 mt-1">
+                                                Register as a team (2-4 members)
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Team Name Field (only for team registration) */}
+                        {registrationType === 'team' && (
+                            <div className="mb-6">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Team Name *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={teamName}
+                                    onChange={(e) => setTeamName(e.target.value)}
+                                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${validationErrors.team?.name ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
+                                    placeholder="Enter your team name"
+                                    required
+                                />
+                                {validationErrors.team?.name && (
+                                    <p className="text-red-500 text-xs mt-1">{validationErrors.team.name}</p>
+                                )}
+                            </div>
+                        )}
+
                         {/* Validation Error Summary */}
                         {showValidationErrors && Object.keys(validationErrors).length > 0 && (
                             <div className="bg-red-50 border border-red-200 p-4 rounded-lg mb-6">
@@ -609,7 +801,14 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                                     <h3 className="text-red-800 font-medium">Please fix the following errors:</h3>
                                 </div>
                                 <ul className="text-sm text-red-700 list-disc list-inside space-y-1">
+                                    {registrationType === 'team' && !teamName.trim() && (
+                                        <li>Team name is required</li>
+                                    )}
+                                    {validationErrors.team?.categories && (
+                                        <li>{validationErrors.team.categories}</li>
+                                    )}
                                     {Object.entries(validationErrors).map(([riderId, errors]) => {
+                                        if (riderId === 'team') return null;
                                         const riderIndex = riders.findIndex(r => r.id === riderId);
                                         return Object.entries(errors).map(([field, error]) => (
                                             <li key={`${riderId}-${field}`}>
@@ -626,11 +825,13 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
                                 <div className="flex items-center justify-center">
                                     <LuCalendar className="w-5 h-5 text-pink-600 mr-2" />
-                                    <span className="text-sm font-medium">9-18 October 2025</span>
+                                    <span className="text-sm font-medium">
+                                        {new Date(eventData.start_date).toLocaleDateString()} - {new Date(eventData.end_date).toLocaleDateString()}
+                                    </span>
                                 </div>
                                 <div className="flex items-center justify-center">
                                     <LuMapPin className="w-5 h-5 text-pink-600 mr-2" />
-                                    <span className="text-sm font-medium">Gurukul Horse Riding Club, Ghaziabad</span>
+                                    <span className="text-sm font-medium">{eventData.venue_location}</span>
                                 </div>
                                 <div className="flex items-center justify-center">
                                     <LuTrophy className="w-5 h-5 text-pink-600 mr-2" />
@@ -639,18 +840,29 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                             </div>
                         </div>
 
-                        {/* Add Rider Button */}
-                        {/* <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-semibold text-gray-800">Riders Information</h3>
-                            <button
-                                type="button"
-                                onClick={addRider}
-                                className="flex items-center space-x-2 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors"
-                            >
-                                <LuPlus className="w-4 h-4" />
-                                <span>Add Rider</span>
-                            </button>
-                        </div> */}
+                        {/* Add Rider Button (only for team registration) */}
+                        {registrationType === 'team' && (
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl font-semibold text-gray-800">
+                                    Team Members ({riders.length}/4)
+                                </h3>
+                                {riders.length < 4 && (
+                                    <button
+                                        type="button"
+                                        onClick={addRider}
+                                        className="flex items-center space-x-2 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors"
+                                    >
+                                        <LuPlus className="w-4 h-4" />
+                                        <span>Add Team Member</span>
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Individual Rider Title */}
+                        {registrationType === 'individual' && (
+                            <h3 className="text-xl font-semibold text-gray-800 mb-6">Rider Information</h3>
+                        )}
 
                         {/* Riders Section */}
                         <div className="space-y-6">
@@ -664,14 +876,14 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                                     <div className="flex items-center justify-between">
                                         <h4 className="text-lg font-medium text-gray-800 flex items-center">
                                             <LuUser className="w-5 h-5 mr-2 text-pink-600" />
-                                            Rider #{index + 1}
-                                            {rider.ageCategoryName && (
+                                            {registrationType === 'team' ? `Team Member #${index + 1}` : 'Rider Information'}
+                                            {rider.ageCategory && (
                                                 <span className="ml-3 px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-                                                    {rider.ageCategoryName} (Age: {rider.age})
+                                                    Age: {rider.age}
                                                 </span>
                                             )}
                                         </h4>
-                                        {riders.length > 1 && (
+                                        {registrationType === 'team' && riders.length > 2 && (
                                             <button
                                                 type="button"
                                                 onClick={() => removeRider(rider.id)}
@@ -682,165 +894,260 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                                         )}
                                     </div>
 
-                                    {/* Basic Information */}
-                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Rider Name *
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={rider.name}
-                                                onChange={(e) => updateRider(rider.id, 'name', e.target.value)}
-                                                className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${validationErrors[rider.id]?.name ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                                                    }`}
-                                                placeholder="Enter rider name"
-                                            />
-                                            {validationErrors[rider.id]?.name && (
-                                                <p className="text-red-500 text-xs mt-1">{validationErrors[rider.id].name}</p>
-                                            )}
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                EFI ID
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={rider.efiId}
-                                                onChange={(e) => updateRider(rider.id, 'efiId', e.target.value)}
-                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                                                placeholder="Enter EFI ID"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Date of Birth *
-                                            </label>
-                                            <input
-                                                type="date"
-                                                value={rider.dateOfBirth}
-                                                onChange={(e) => updateRider(rider.id, 'dateOfBirth', e.target.value)}
-                                                className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${validationErrors[rider.id]?.dateOfBirth ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                                                    }`}
-                                            />
-                                            {validationErrors[rider.id]?.dateOfBirth && (
-                                                <p className="text-red-500 text-xs mt-1">{validationErrors[rider.id].dateOfBirth}</p>
-                                            )}
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Gender *
-                                            </label>
-                                            <select
-                                                value={rider.gender}
-                                                onChange={(e) => updateRider(rider.id, 'gender', e.target.value)}
-                                                className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${validationErrors[rider.id]?.gender ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                                                    }`}
-                                            >
-                                                <option value="">Select Gender</option>
-                                                <option value="male">Male</option>
-                                                <option value="female">Female</option>
-                                            </select>
-                                            {validationErrors[rider.id]?.gender && (
-                                                <p className="text-red-500 text-xs mt-1">{validationErrors[rider.id].gender}</p>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Competition Selection */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Select Competitions * (₹1000 per event per competition)
-                                        </label>
-                                        <div className={`grid grid-cols-1 md:grid-cols-3 gap-3 p-3 border rounded-lg ${validationErrors[rider.id]?.competitions ? 'border-red-300 bg-red-50' : 'border-gray-200'
-                                            }`}>
-                                            {COMPETITION_TYPES.map((comp) => (
-                                                <label key={comp.id} className="flex items-center space-x-2 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={rider.competitions.includes(comp.id)}
-                                                        onChange={() => toggleCompetition(rider.id, comp.id)}
-                                                        className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
-                                                    />
-                                                    <span className="text-sm text-gray-700">{comp.name}</span>
-                                                </label>
-                                            ))}
-                                        </div>
-                                        {validationErrors[rider.id]?.competitions && (
-                                            <p className="text-red-500 text-xs mt-1">{validationErrors[rider.id].competitions}</p>
-                                        )}
-                                    </div>
-
-                                    {/* Event Selection */}
-                                    {rider.ageCategory && (
-                                        <div>
+                                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                        {/* Profile Image Upload */}
+                                        <div className="md:col-span-2">
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Select Events *
+                                                Profile Image
                                             </label>
-                                            <div className={`border rounded-lg ${validationErrors[rider.id]?.events ? 'border-red-300 bg-red-50' : 'border-gray-200'
-                                                }`}>
-                                                {/* Event Category Tabs */}
-                                                <div className="border-b border-gray-200">
-                                                    <div className="flex">
-                                                        {Object.entries(EVENT_CATEGORIES).map(([key, category]) => (
-                                                            <button
-                                                                key={key}
-                                                                type="button"
-                                                                onClick={() => setActiveTab(key as EventCategoryType)}
-                                                                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === key
-                                                                    ? 'border-pink-500 text-pink-600 bg-pink-50'
-                                                                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                                                                    }`}
-                                                            >
-                                                                {category.name}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                {/* Event Selection */}
-                                                <div className="p-4">
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                        {getAvailableEvents(rider, activeTab).map((event) => (
-                                                            <label key={event} className="flex items-center space-x-2 cursor-pointer p-2 hover:bg-gray-50 rounded">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={rider.selectedEvents.includes(event)}
-                                                                    onChange={() => toggleEvent(rider.id, event)}
-                                                                    className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
-                                                                />
-                                                                <span className="text-sm text-gray-700">{event}</span>
-                                                            </label>
-                                                        ))}
-                                                    </div>
-                                                    {getAvailableEvents(rider, activeTab).length === 0 && (
-                                                        <p className="text-gray-500 text-sm text-center py-4">
-                                                            No events available for this age category in {EVENT_CATEGORIES[activeTab].name}
-                                                        </p>
+                                            <div className="relative">
+                                                <div
+                                                    className={`w-20 h-20 rounded-full border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden ${validationErrors[rider.id]?.profileImage ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
+                                                    onClick={() => triggerImageUpload(rider.id)}
+                                                >
+                                                    {rider.profileImagePreview ? (
+                                                        <img
+                                                            src={rider.profileImagePreview}
+                                                            alt="Profile preview"
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <LuCamera className="w-6 h-6 text-gray-400" />
                                                     )}
                                                 </div>
+                                                <input
+                                                    type="file"
+                                                    ref={(el: HTMLInputElement | null) => {
+                                                        if (el) {
+                                                            fileInputRefs.current[rider.id] = el;
+                                                        }
+                                                    }}
+                                                    onChange={(e) => handleImageUpload(rider.id, e)}
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                />
+                                                {validationErrors[rider.id]?.profileImage && (
+                                                    <p className="text-red-500 text-xs mt-1">{validationErrors[rider.id].profileImage}</p>
+                                                )}
                                             </div>
-                                            {validationErrors[rider.id]?.events && (
-                                                <p className="text-red-500 text-xs mt-1">{validationErrors[rider.id].events}</p>
-                                            )}
                                         </div>
-                                    )}
 
-                                    {/* Rider Total */}
-                                    {rider.competitions.length > 0 && rider.selectedEvents.length > 0 && (
-                                        <div className="bg-gray-50 p-3 rounded-lg">
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-sm text-gray-600">
-                                                    {rider.competitions.length} competition(s) × {rider.selectedEvents.length} event(s) × ₹1000
-                                                </span>
-                                                <span className="text-lg font-semibold text-pink-600">
-                                                    ₹{calculateRiderTotal(rider).toLocaleString()}
-                                                </span>
+                                        {/* Basic Information */}
+                                        <div className="md:col-span-10 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Rider Name *
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={rider.name}
+                                                    onChange={(e) => updateRider(rider.id, 'name', e.target.value)}
+                                                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${validationErrors[rider.id]?.name ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                                                        }`}
+                                                    placeholder="Enter rider name"
+                                                />
+                                                {validationErrors[rider.id]?.name && (
+                                                    <p className="text-red-500 text-xs mt-1">{validationErrors[rider.id].name}</p>
+                                                )}
                                             </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    EFI ID
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={rider.efiId}
+                                                    onChange={(e) => updateRider(rider.id, 'efiId', e.target.value)}
+                                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                                    placeholder="Enter EFI ID"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Date of Birth *
+                                                </label>
+                                                <input
+                                                    type="date"
+                                                    value={rider.dateOfBirth}
+                                                    onChange={(e) => updateRider(rider.id, 'dateOfBirth', e.target.value)}
+                                                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${validationErrors[rider.id]?.dateOfBirth ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                                                        }`}
+                                                />
+                                                {validationErrors[rider.id]?.dateOfBirth && (
+                                                    <p className="text-red-500 text-xs mt-1">{validationErrors[rider.id].dateOfBirth}</p>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Gender *
+                                                </label>
+                                                <select
+                                                    value={rider.gender}
+                                                    onChange={(e) => updateRider(rider.id, 'gender', e.target.value)}
+                                                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${validationErrors[rider.id]?.gender ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                                                        }`}
+                                                >
+                                                    <option value="">Select Gender</option>
+                                                    <option value="male">Male</option>
+                                                    <option value="female">Female</option>
+                                                </select>
+                                                {validationErrors[rider.id]?.gender && (
+                                                    <p className="text-red-500 text-xs mt-1">{validationErrors[rider.id].gender}</p>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Phone Number *
+                                                </label>
+                                                <input
+                                                    type="tel"
+                                                    value={rider.phone}
+                                                    onChange={(e) => updateRider(rider.id, 'phone', e.target.value)}
+                                                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${validationErrors[rider.id]?.phone ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                                                        }`}
+                                                    placeholder="Enter phone number"
+                                                />
+                                                {validationErrors[rider.id]?.phone && (
+                                                    <p className="text-red-500 text-xs mt-1">{validationErrors[rider.id].phone}</p>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Email Address *
+                                                </label>
+                                                <input
+                                                    type="email"
+                                                    value={rider.email}
+                                                    onChange={(e) => updateRider(rider.id, 'email', e.target.value)}
+                                                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${validationErrors[rider.id]?.email ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                                                        }`}
+                                                    placeholder="Enter email address"
+                                                />
+                                                {validationErrors[rider.id]?.email && (
+                                                    <p className="text-red-500 text-xs mt-1">{validationErrors[rider.id].email}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Competition Selection (only for individual registration) */}
+                                    {registrationType === 'individual' && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Select Competitions * (₹1000 per category per competition)
+                                            </label>
+                                            <div className={`grid grid-cols-1 md:grid-cols-3 gap-3 p-3 border rounded-lg ${validationErrors[rider.id]?.competitions ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                                                }`}>
+                                                {eventData.competitions.map((comp) => (
+                                                    <label key={comp.id} className="flex items-center space-x-2 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={rider.competitions.includes(comp.id)}
+                                                            onChange={() => toggleCompetition(comp.id)}
+                                                            className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
+                                                        />
+                                                        <span className="text-sm text-gray-700">{comp.name}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                            {validationErrors[rider.id]?.competitions && (
+                                                <p className="text-red-500 text-xs mt-1">{validationErrors[rider.id].competitions}</p>
+                                            )}
                                         </div>
                                     )}
                                 </motion.div>
                             ))}
+                        </div>
+
+                        {/* Competition Selection (for team registration) */}
+                        {registrationType === 'team' && (
+                            <div className="mt-6">
+                                <h3 className="text-xl font-semibold text-gray-800 mb-4">Team Competitions</h3>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Select Competitions * (₹1000 per category per competition)
+                                </label>
+                                <div className={`grid grid-cols-1 md:grid-cols-3 gap-3 p-3 border rounded-lg ${validationErrors.team?.categories ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                                    }`}>
+                                    {eventData.competitions.map((comp) => (
+                                        <label key={comp.id} className="flex items-center space-x-2 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={teamCompetitions.includes(comp.id)}
+                                                onChange={() => toggleCompetition(comp.id)}
+                                                className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
+                                            />
+                                            <span className="text-sm text-gray-700">{comp.name}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                                {validationErrors.team?.categories && (
+                                    <p className="text-red-500 text-xs mt-1">{validationErrors.team.categories}</p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Category Selection */}
+                        <div className="mt-8">
+                            <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                                {registrationType === 'team' ? 'Team Category Selection' : 'Category Selection'}
+                            </h3>
+
+                            {/* Sub-Event Selection Tabs */}
+                            <div className="border-b border-gray-200 mb-4">
+                                <div className="flex overflow-x-auto">
+                                    {eventData.sub_events.map((subEvent) => (
+                                        <button
+                                            key={subEvent.id}
+                                            type="button"
+                                            onClick={() => setActiveSubEvent(subEvent.id)}
+                                            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeSubEvent === subEvent.id
+                                                ? 'border-pink-500 text-pink-600 bg-pink-50'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                                                }`}
+                                        >
+                                            {subEvent.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Category Selection */}
+                            <div className={`border rounded-lg ${validationErrors.team?.categories ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}>
+                                <div className="p-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {getAvailableCategories().map((category) => (
+                                            <label key={category.id} className="flex items-start space-x-2 cursor-pointer p-2 hover:bg-gray-50 rounded">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedCategories.includes(category.id)}
+                                                    onChange={() => toggleCategory(category.id)}
+                                                    className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500 mt-1"
+                                                />
+                                                <div>
+                                                    <span className="text-sm font-medium text-gray-700">{category.category_name}</span>
+                                                    <div className="text-xs text-gray-500 mt-1">
+                                                        {category.age_group && <div>Age: {category.age_group}</div>}
+                                                        {category.gender_restriction && category.gender_restriction !== 'mixed' && (
+                                                            <div>Gender: {category.gender_restriction}</div>
+                                                        )}
+                                                        {category.entry_type === 'team' && (
+                                                            <div>Team size: {category.min_size_of_team}-{category.max_size_of_team} members</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    {getAvailableCategories().length === 0 && (
+                                        <p className="text-gray-500 text-sm text-center py-4">
+                                            No categories available for {registrationType} registration in this sub-event
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                            {validationErrors.team?.categories && (
+                                <p className="text-red-500 text-xs mt-1">{validationErrors.team.categories}</p>
+                            )}
                         </div>
 
                         {/* Parent/Coach Information */}
@@ -880,15 +1187,14 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                                 <div>
                                     <h3 className="text-xl font-semibold text-gray-800">Total Registration Fee</h3>
                                     <p className="text-sm text-gray-600 mt-1">
-                                        {riders.reduce((total, rider) => total + (rider.competitions.length * rider.selectedEvents.length), 0)} total entries across all riders
+                                        {registrationType === 'team'
+                                            ? `${teamCompetitions.length} competition entries`
+                                            : `${riders.reduce((total, rider) => total + rider.competitions.length, 0)} competition entries`}
+                                        × {selectedCategories.length} categories × ₹1000
                                     </p>
                                 </div>
                                 <div className="text-right">
                                     <div className="text-3xl font-bold text-pink-600">₹{calculateTotal().toLocaleString()} + GST</div>
-                                    {/* <div className="text-sm text-gray-600">+ GST (18%)</div> */}
-                                    {/* <div className="text-lg font-semibold text-gray-800 border-t pt-1 mt-1">
-                                        ₹{Math.round(calculateTotal() * 1.18).toLocaleString()} Total
-                                    </div> */}
                                 </div>
                             </div>
                         </div>
@@ -904,8 +1210,10 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                             </button>
                             <button
                                 type="submit"
-                                className="px-8 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg hover:from-pink-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl"
+                                disabled={submitting}
+                                className="px-8 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg hover:from-pink-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                             >
+                                {submitting && <LuLoader className="w-4 h-4 animate-spin mr-2" />}
                                 Submit Registration
                             </button>
                         </div>

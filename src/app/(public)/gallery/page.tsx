@@ -16,7 +16,7 @@ const Gallery: React.FC = () => {
 
     // Generate array of 52 images
     const generateImages = (): string[] => {
-        return Array.from({ length: 49 }, (_, i) => `${i + 1}.jpg`);
+        return Array.from({ length: 40 }, (_, i) => `${i + 1}.jpg`);
     };
 
     const images: string[] = generateImages();
@@ -128,8 +128,8 @@ const Gallery: React.FC = () => {
             <section className="py-20 bg-[url(/assets/images/bg-4.webp)] w-full bg-center bg-contain bg-repeat-y">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="grid gap-2.5 pb-10">
-                        <h2 className="w-full text-center text-cardinal-pink-950 text-4xl font-bold font-manrope leading-normal">
-                            Our Gallery
+                        <h2 className="w-full text-center text-cardinal-pink-950 text-4xl md:text-5xl font-bold font-manrope leading-normal">
+                            Gallery
                         </h2>
                     </div>
 

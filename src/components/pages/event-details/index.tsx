@@ -6,7 +6,7 @@ const Event = ({ slug }: { slug: string }) => {
     return (
         <>
             <Hero slug={slug} />
-            <DescriptionAndRules slug={slug}/>
+            <DescriptionAndRules slug={slug} />
         </>
     )
 }
