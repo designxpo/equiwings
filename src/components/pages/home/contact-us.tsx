@@ -166,7 +166,7 @@ const ContactUs = () => {
     };
 
     return (
-        <section>
+        <section id="contact-us">
             <div className="relative bg-[url(/assets/images/bg-2.webp)] overflow-hidden w-full bg-center bg-no-repeat bg-cover">
                 <div className="max-w-screen-xl mx-auto z-10 flex flex-col items-center justify-center py-20 px-6 sm:px-8 min-h-screen lg:px-16">
                     {/* Logo and Title - Centered */}

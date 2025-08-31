@@ -3,6 +3,7 @@ import { FaCalendar, FaUsers, FaTrophy, FaStar, FaAward } from "react-icons/fa"
 import { MdOutlineEventAvailable, MdVerified } from "react-icons/md"
 import { GiMedal } from "react-icons/gi"
 import { FaShield } from "react-icons/fa6"
+import Link from "next/link"
 
 interface SlideDetailsProps {
   slug: string
@@ -27,14 +28,10 @@ const SYLComponent: React.FC = () => {
               Stretch Your Limit (SYL) Program is the World’s First App based Athletics Monitoring Program designed specifically for School Students.
             </p>
             <div className="mt-8 sm:mt-10 lg:mt-12 flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
-              <button className="bg-white text-gray-800 px-5 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-gray-100 transition-all duration-300 flex items-center justify-center shadow-lg text-sm sm:text-base md:text-lg">
-                <FaUsers className="mr-3" />
-                Explore Program
-              </button>
-              <button className="border-2 border-white text-white px-5 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-white hover:text-gray-800 transition-all duration-300 flex items-center justify-center backdrop-blur-sm text-sm sm:text-base md:text-lg">
+              <Link href="/#contact-us" className="border-2 border-white text-white px-5 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-white hover:text-gray-800 transition-all duration-300 flex items-center justify-center backdrop-blur-sm text-sm sm:text-base md:text-lg">
                 <FaCalendar className="mr-3" />
-                Schedule Consultation
-              </button>
+                Contact Us
+              </Link>
             </div>
           </div>
         </div>
@@ -557,14 +554,10 @@ const EquestrianPoloComponent: React.FC = () => {
               Where Luxury meets Thrill for Kings & Cavalry
             </p>
             <div className="mt-8 sm:mt-10 lg:mt-12 flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
-              <button className="bg-white text-gray-800 px-5 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-gray-100 transition-all duration-300 flex items-center justify-center shadow-lg text-sm sm:text-base md:text-lg">
-                <FaUsers className="mr-3" />
-                Explore Program
-              </button>
-              <button className="border-2 border-white text-white px-5 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-white hover:text-gray-800 transition-all duration-300 flex items-center justify-center backdrop-blur-sm text-sm sm:text-base md:text-lg">
+              <Link href="/#contact-us" className="border-2 border-white text-white px-5 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-white hover:text-gray-800 transition-all duration-300 flex items-center justify-center backdrop-blur-sm text-sm sm:text-base md:text-lg">
                 <FaCalendar className="mr-3" />
-                Schedule Consultation
-              </button>
+                Contact Us
+              </Link>
             </div>
           </div>
         </div>
@@ -886,18 +879,14 @@ const ESportsComponent: React.FC = () => {
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold mb-4 sm:mb-5 md:mb-6 tracking-tight">
               E-Sports
             </h1>
-            <p className="text-base sm:text-lg md:text-xl max-w-3xl font-semibold mx-auto opacity-90 leading-relaxed font-light">
+            <p className="text-base sm:text-lg md:text-xl max-w-3xl font-semibold mx-auto opacity-90 leading-relaxed">
               A next-generation esports platform that brings players, fans, and brands together in one professional competitive-gaming ecosystem.It delivers organised tournaments, structured team development, and global online events, blending the high-energy spirit of traditional sports with the always-on accessibility of the digital arena.
             </p>
             <div className="mt-8 sm:mt-10 lg:mt-12 flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
-              <button className="bg-white text-gray-800 px-5 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-gray-100 transition-all duration-300 flex items-center justify-center shadow-lg text-sm sm:text-base md:text-lg">
-                <FaUsers className="mr-3" />
-                Explore Program
-              </button>
-              <button className="border-2 border-white text-white px-5 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-white hover:text-gray-800 transition-all duration-300 flex items-center justify-center backdrop-blur-sm text-sm sm:text-base md:text-lg">
+              <Link href="/#contact-us" className="border-2 border-white text-white px-5 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-white hover:text-gray-800 transition-all duration-300 flex items-center justify-center backdrop-blur-sm text-sm sm:text-base md:text-lg">
                 <FaCalendar className="mr-3" />
-                Schedule Consultation
-              </button>
+                Contact Us
+              </Link>
             </div>
           </div>
         </div>
@@ -1214,14 +1203,10 @@ const BikePeggingComponent: React.FC = () => {
               Thrilling Motorbike Pegging League for every Bike Rider
             </p>
             <div className="mt-8 sm:mt-10 lg:mt-12 flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
-              <button className="bg-white text-gray-800 px-5 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-gray-100 transition-all duration-300 flex items-center justify-center shadow-lg text-sm sm:text-base md:text-lg">
-                <FaUsers className="mr-3" />
-                Join League
-              </button>
-              <button className="border-2 border-white text-white px-5 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-white hover:text-gray-800 transition-all duration-300 flex items-center justify-center backdrop-blur-sm text-sm sm:text-base md:text-lg">
+              <Link href="/#contact-us" className="border-2 border-white text-white px-5 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-white hover:text-gray-800 transition-all duration-300 flex items-center justify-center backdrop-blur-sm text-sm sm:text-base md:text-lg">
                 <FaCalendar className="mr-3" />
-                View Events
-              </button>
+                Contact Us
+              </Link>
             </div>
           </div>
         </div>
@@ -1946,14 +1931,10 @@ const SchoolEquestrianComponent: React.FC = () => {
               Specialised Horse Riding Program for Schools
             </p>
             <div className="mt-8 sm:mt-10 lg:mt-12 flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
-              <button className="bg-white text-gray-800 px-5 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-gray-100 transition-all duration-300 flex items-center justify-center shadow-lg text-sm sm:text-base md:text-lg">
-                <FaUsers className="mr-3" />
-                Enroll School
-              </button>
-              <button className="border-2 border-white text-white px-5 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-white hover:text-gray-800 transition-all duration-300 flex items-center justify-center backdrop-blur-sm text-sm sm:text-base md:text-lg">
+              <Link href="/#contact-us" className="border-2 border-white text-white px-5 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-white hover:text-gray-800 transition-all duration-300 flex items-center justify-center backdrop-blur-sm text-sm sm:text-base md:text-lg">
                 <FaCalendar className="mr-3" />
-                Schedule Demo
-              </button>
+                Contact Us
+              </Link>
             </div>
           </div>
         </div>
@@ -2275,14 +2256,10 @@ const AllSportsSchoolComponent: React.FC = () => {
               Complete Sports Outsourcing Solutions for Schools
             </p>
             <div className="mt-8 sm:mt-10 lg:mt-12 flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
-              <button className="bg-white text-gray-800 px-5 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-gray-100 transition-all duration-300 flex items-center justify-center shadow-lg text-sm sm:text-base md:text-lg">
-                <FaUsers className="mr-3" />
-                Partner With Us
-              </button>
-              <button className="border-2 border-white text-white px-5 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-white hover:text-gray-800 transition-all duration-300 flex items-center justify-center backdrop-blur-sm text-sm sm:text-base md:text-lg">
+              <Link href="/#contact-us" className="border-2 border-white text-white px-5 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-full font-semibold hover:bg-white hover:text-gray-800 transition-all duration-300 flex items-center justify-center backdrop-blur-sm text-sm sm:text-base md:text-lg">
                 <FaCalendar className="mr-3" />
-                Get Quote
-              </button>
+                Contact Us
+              </Link>
             </div>
           </div>
         </div>
