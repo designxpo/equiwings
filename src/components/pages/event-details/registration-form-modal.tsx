@@ -563,8 +563,9 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                 }
 
                 // Add profile image if available
+                // Backend expects image field as 'file' (not nested), append one per rider
                 if (rider.profileImage) {
-                    formData.append(`riders[${riderIndex}][profileImage]`, rider.profileImage);
+                    formData.append('file', rider.profileImage, rider.profileImage.name);
                 }
             });
 
