@@ -7,7 +7,7 @@ import { motion } from "framer-motion"
 const announcements = [
   {
     id: 1,
-    title: "EQUESTRIAN ACADEMY PROGRAMS",
+    title: "School Equestrian Program",
     sub_title: 'Learn. Ride. Excel.',
     description:
       "Comprehensive riding programs for all ages and skill levels. From kids learning basic horsemanship to adults pursuing advanced riding sessions. Build confidence, earn certifications, and master the art of horsemanship with our expert instructors.",
@@ -16,7 +16,7 @@ const announcements = [
   },
   {
     id: 2,
-    title: "COMPETITION & CORPORATE PROGRAMS",
+    title: "Corporate Bonding Through Equestrian Experiences",
     sub_title: 'Train Like Champions',
     description:
       "Professional competition coaching for show-jumping, dressage, and endurance events. Plus corporate wellness programs featuring team-building sessions and executive coaching through horsemanship. Elevate performance both in and out of the saddle.",

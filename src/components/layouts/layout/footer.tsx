@@ -4,6 +4,7 @@ import Link from "next/link"
 import { LuMail, LuPhone, LuFacebook, LuShoppingBag } from "react-icons/lu"
 import { usePathname } from "next/navigation"
 import Image from "next/image";
+import toast from "react-hot-toast";
 
 interface FooterLink {
     href: string
@@ -71,6 +72,9 @@ const Footer: React.FC = () => {
                                         </span>
                                     </Link>
                                 ))}
+                                <button onClick={() => toast.success("Coming Soon!")} className={`group text-left hover:cursor-pointer hover:scale-95 ${isBg ? "hover:text-gray-200" : "hover:text-[#53295a]"} font-medium text-xl transition-all duration-300 relative overflow-hidden py-1`}>
+                                    GMS
+                                </button>
                             </nav>
                         </div>
                     </div>

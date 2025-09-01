@@ -3,9 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { Easing, motion, Variants } from 'framer-motion';
 import { FaMapMarkerAlt, FaUsers, FaTrophy } from 'react-icons/fa';
 import { MdOutlineCalendarToday, MdDescription } from 'react-icons/md';
-import axiosInstance from "@/lib/config/axios";
-import PAST_EVENTS_DATA from '@/utils/events.json';
+import EVENTS_DATA from '@/utils/events.json';
 import RegistrationFormModal from './registration-form-modal';
+import ThePentaGrand2025DescriptionAndRules from './penta-grand-2025-description-and-rules';
 
 interface EventData {
     id: string;
@@ -51,7 +51,7 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
 
                 if (isPastEvent) {
                     // Search in past events data
-                    const pastEvent = PAST_EVENTS_DATA.pastEvents.find((event: any) => {
+                    const pastEvent = EVENTS_DATA.pastEvents.find((event: any) => {
                         const eventSlug = event.title.toLowerCase().replace(/&/g, 'and').replace(/\s+/g, '-');
                         return eventSlug === cleanSlug;
                     });
@@ -69,32 +69,19 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
                         };
                     }
                 } else {
-                    // Search in upcoming events from API
-                    const response = await axiosInstance.get('/customers/announcements');
-                    const upcomingEvents = response.data.announcement || [];
-
-                    const upcomingEvent = upcomingEvents.find((event: any) => {
-                        const eventSlug = (event.title || '').toLowerCase().replace(/&/g, 'and').replace(/\s+/g, '-');
+                    const upcomingEvent = EVENTS_DATA.upcomingEvents.find((event: any) => {
+                        const eventSlug = event.title.toLowerCase().replace(/&/g, 'and').replace(/\s+/g, '-');
                         return eventSlug === cleanSlug;
                     });
 
                     if (upcomingEvent) {
                         foundEvent = {
-                            id: upcomingEvent._id,
+                            id: upcomingEvent.id,
                             title: upcomingEvent.title || "Upcoming Event",
                             description: upcomingEvent.description || "No description available",
                             image: upcomingEvent.image,
-                            date: upcomingEvent.date ? new Date(upcomingEvent.date).toLocaleDateString('en-US', {
-                                day: 'numeric',
-                                month: 'long',
-                                year: 'numeric'
-                            }) : undefined,
+                            date: upcomingEvent.date,
                             location: upcomingEvent.location || "",
-                            rules: upcomingEvent.rules || [],
-                            requirements: upcomingEvent.requirements || [],
-                            prizes: upcomingEvent.prizes,
-                            registrationFee: upcomingEvent.registrationFee,
-                            contactInfo: upcomingEvent.contactInfo,
                             isPastEvent: false
                         };
                     }
@@ -248,6 +235,13 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
                 </div>
             </div>
         );
+    }
+    console.log()
+
+    if (eventData.id === 'the-penta-grand-2025') {
+        return (
+            <ThePentaGrand2025DescriptionAndRules slug={eventData.id} />
+        )
     }
 
     return (
@@ -404,7 +398,7 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
                 )}
 
                 {/* Action Buttons - Only show for upcoming events */}
-                {!eventData.isPastEvent && (
+                {false && (
                     <motion.div
                         variants={itemVariants}
                         className="flex flex-col sm:flex-row gap-4 justify-center"
