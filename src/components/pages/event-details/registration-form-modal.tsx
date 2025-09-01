@@ -150,18 +150,28 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
         }
     ]);
 
-    const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+    // REPLACE selectedCategories with competitionCategories
+    const [competitionCategories, setCompetitionCategories] = useState<{
+        [competitionId: string]: string[]
+    }>({})
+
     const [parentName, setParentName] = useState("")
     const [coachName, setCoachName] = useState("")
     const [activeSubEvent, setActiveSubEvent] = useState<string>("")
     const [validationErrors, setValidationErrors] = useState<ValidationErrors>({})
     const [showValidationErrors, setShowValidationErrors] = useState(false)
-    const [teamCompetitions, setTeamCompetitions] = useState<string[]>([])
-
     const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({})
 
     // Dates
     const now = new Date()
+
+    const getAllSelectedCategories = () => {
+        return Object.values(competitionCategories).flat()
+    }
+
+    const getCategoriesForCompetition = (competitionId: string) => {
+        return competitionCategories[competitionId] || []
+    }
 
     useEffect(() => {
         if (isOpen) {
@@ -190,6 +200,38 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
             console.error("Error fetching event data:", err)
         } finally {
             setLoading(false)
+        }
+    }
+
+    // Helpers
+    const toggleCategoryForCompetition = (competitionId: string, categoryId: string) => {
+        if (!eventData) return
+
+        // Build the set of eligible IDs across all sub-events
+        const allEligibleIds = new Set<string>()
+        eventData.sub_events.forEach((se) => {
+            getEligibleCategoriesBySubEvent(se.id).forEach((c) => allEligibleIds.add(c.id))
+        })
+
+        if (!allEligibleIds.has(categoryId)) return // prevent selecting ineligible category
+
+        setCompetitionCategories(prev => {
+            const competitionCats = prev[competitionId] || []
+            const newCompetitionCats = competitionCats.includes(categoryId)
+                ? competitionCats.filter(id => id !== categoryId)
+                : [...competitionCats, categoryId]
+
+            return {
+                ...prev,
+                [competitionId]: newCompetitionCats
+            }
+        })
+
+        // Clear validation errors
+        if (validationErrors.team?.categories) {
+            const newErrors: ValidationErrors = { ...validationErrors }
+            if (newErrors.team) delete newErrors.team.categories
+            setValidationErrors(newErrors)
         }
     }
 
@@ -329,23 +371,6 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
         fileInputRefs.current[id]?.click()
     }
 
-    const toggleCompetition = (competitionId: string) => {
-        if (registrationType === "team") {
-            setTeamCompetitions((prev) =>
-                prev.includes(competitionId) ? prev.filter((c) => c !== competitionId) : [...prev, competitionId],
-            )
-        } else {
-            setRiders((prev) =>
-                prev.map((r) => {
-                    const competitions = r.competitions.includes(competitionId)
-                        ? r.competitions.filter((c) => c !== competitionId)
-                        : [...r.competitions, competitionId]
-                    return { ...r, competitions }
-                }),
-            )
-        }
-    }
-
     // Eligibility helpers
     const isRiderInfoComplete = (r: RiderEntry) => Boolean(r.dateOfBirth && r.gender)
     const areAllRidersInfoComplete = (rs: RiderEntry[]) => rs.every(isRiderInfoComplete)
@@ -442,39 +467,47 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
         eventData.sub_events.forEach((se) => {
             getEligibleCategoriesBySubEvent(se.id).forEach((c) => allEligibleIds.add(c.id))
         })
-        setSelectedCategories((prev) => prev.filter((id) => allEligibleIds.has(id)))
+
+        // Prune ineligible categories from all competitions
+        setCompetitionCategories((prev) => {
+            const updated = { ...prev }
+            let hasChanges = false
+
+            Object.keys(updated).forEach(competitionId => {
+                const filteredCats = updated[competitionId].filter(id => allEligibleIds.has(id))
+                if (filteredCats.length !== updated[competitionId].length) {
+                    updated[competitionId] = filteredCats
+                    hasChanges = true
+                }
+            })
+
+            return hasChanges ? updated : prev
+        })
     }, [eventData, getEligibleCategoriesBySubEvent])
 
-    const toggleCategory = (categoryId: string) => {
-        if (!eventData) return
-        // Build the set of eligible IDs across all sub-events
-        const allEligibleIds = new Set<string>()
-        eventData.sub_events.forEach((se) => {
-            getEligibleCategoriesBySubEvent(se.id).forEach((c) => allEligibleIds.add(c.id))
-        })
-        if (!allEligibleIds.has(categoryId)) return // prevent selecting ineligible category (guard)
-
-        setSelectedCategories((prev) =>
-            prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId],
-        )
-
-        // Clear team category-level validation errors
-        if (validationErrors.team?.categories) {
-            const newErrors: ValidationErrors = { ...validationErrors }
-            if (newErrors.team) delete newErrors.team.categories
-            setValidationErrors(newErrors)
-        }
-    }
 
     const calculateRiderTotal = (rider: RiderEntry): number => {
         if (!eventData) return 0
-        const competitionCount = registrationType === "team" ? teamCompetitions.length : rider.competitions.length
-        const categoryCount = selectedCategories.length
-        const baseFee = 1000 // default fee
-        return competitionCount * categoryCount * baseFee
+
+        const baseFee = 1000
+        let total = 0
+
+        // Calculate based on competitions with selected categories
+        Object.entries(competitionCategories).forEach(([competitionId, categoryIds]) => {
+            if (categoryIds.length > 0) {
+                total += categoryIds.length * baseFee
+            }
+        })
+
+        return total
     }
 
-    const calculateTotal = () => riders.reduce((t, r) => t + calculateRiderTotal(r), 0)
+    const calculateTotal = () => {
+        if (registrationType === "team") {
+            return calculateRiderTotal(riders[0]) // Same fee for whole team
+        }
+        return calculateRiderTotal(riders[0]) // Since all riders have same competition-category selections
+    }
 
     const validateForm = (): boolean => {
         const errors: ValidationErrors = {}
@@ -486,33 +519,33 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                 teamErr.name = "Team name is required"
                 hasErrors = true
             }
-            if (selectedCategories.length === 0) {
-                teamErr.categories = "Please select at least one category"
-                hasErrors = true
-            }
-            if (teamCompetitions.length === 0) {
-                teamErr.categories = "Please select at least one competition"
+
+            // Check if at least one competition has categories selected
+            const hasAnySelection = Object.values(competitionCategories).some(cats => cats.length > 0)
+            if (!hasAnySelection) {
+                teamErr.categories = "Please select at least one category for any competition"
                 hasErrors = true
             }
 
-            // Team size check for every selected category
-            if (eventData && activeSubEvent) {
-                const subEvent = eventData.sub_events.find((se) => se.id === activeSubEvent)
-                if (subEvent) {
-                    const selectedCats = subEvent.categories.filter((c) => selectedCategories.includes(c.id))
-                    const invalidCats = selectedCats.filter((c) => {
-                        const minSize = c.min_size_of_team ?? 2
-                        const maxSize = c.max_size_of_team ?? 100
-                        return riders.length < minSize || riders.length > maxSize
-                    })
-                    if (invalidCats.length > 0) {
-                        const msg =
-                            invalidCats.length === 1
-                                ? `Team size must match ${invalidCats[0].category_name} requirements`
-                                : "Team size must match all selected categories' requirements"
-                        teamErr.categories = msg
-                        hasErrors = true
-                    }
+            // Team size check for every selected category across all competitions
+            if (eventData && hasAnySelection) {
+                const allSelectedCategoryIds = getAllSelectedCategories()
+                const allSelectedCategories = eventData.sub_events
+                    .flatMap(se => se.categories)
+                    .filter(cat => allSelectedCategoryIds.includes(cat.id))
+
+                const invalidCats = allSelectedCategories.filter((c) => {
+                    const minSize = c.min_size_of_team ?? 2
+                    const maxSize = c.max_size_of_team ?? 100
+                    return riders.length < minSize || riders.length > maxSize
+                })
+
+                if (invalidCats.length > 0) {
+                    const msg = invalidCats.length === 1
+                        ? `Team size must match ${invalidCats[0].category_name} requirements`
+                        : "Team size must match all selected categories' requirements"
+                    teamErr.categories = msg
+                    hasErrors = true
                 }
             }
 
@@ -521,7 +554,17 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
             }
         }
 
-        // Rider-level checks
+        // Individual validation
+        if (registrationType === "individual") {
+            const hasAnySelection = Object.values(competitionCategories).some(cats => cats.length > 0)
+            if (!hasAnySelection) {
+                if (!errors.team) errors.team = {}
+                errors.team.categories = "Please select at least one category for any competition"
+                hasErrors = true
+            }
+        }
+
+        // Rider-level checks remain the same
         riders.forEach((rider) => {
             const rErr: RiderFieldErrors = {}
 
@@ -531,6 +574,10 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
             }
             if (!rider.dateOfBirth) {
                 rErr.dateOfBirth = "Date of birth is required"
+                hasErrors = true
+            }
+            if (!rider.profileImage) {
+                rErr.profileImage = "Profile image is required"
                 hasErrors = true
             }
             if (!rider.gender) {
@@ -548,12 +595,8 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                 rErr.email = "Email is invalid"
                 hasErrors = true
             }
-            if (registrationType === "individual" && rider.competitions.length === 0) {
-                rErr.competitions = "Please select at least one competition"
-                hasErrors = true
-            }
+
             if (rider.dateOfBirth && !rider.ageCategory) {
-                // if our computed mapping didn't find a category, flag
                 rErr.dateOfBirth = "Age does not fall into any competition category"
                 hasErrors = true
             }
@@ -576,34 +619,10 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
             }
         })
 
-        if (registrationType === "individual" && selectedCategories.length === 0) {
-            if (!errors.team) errors.team = {}
-            errors.team.categories = "Please select at least one category"
-            hasErrors = true
-        }
-
         setValidationErrors(errors)
         setShowValidationErrors(hasErrors)
         return !hasErrors
     }
-
-
-    // Build mapping of subEventId -> selected category ids
-    const getSelectedCategoriesBySubEvent = useMemo(() => {
-        return () => {
-            if (!eventData || selectedCategories.length === 0) return [] as { subEventId: string; categoryIds: string[] }[]
-
-            const result: { subEventId: string; categoryIds: string[] }[] = []
-            eventData.sub_events.forEach((subEvent) => {
-                const eligibleIdsInSubEvent = new Set(subEvent.categories.map((c) => c.id))
-                const categoryIds = selectedCategories.filter((id) => eligibleIdsInSubEvent.has(id))
-                if (categoryIds.length > 0) {
-                    result.push({ subEventId: subEvent.id, categoryIds })
-                }
-            })
-            return result
-        }
-    }, [eventData, selectedCategories])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -624,38 +643,36 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
             formData.append("coachName", coachName)
             formData.append("totalFee", calculateTotal().toString())
 
-            // Build subEvent/category mapping and flat subEventIds list
-            const mapping = getSelectedCategoriesBySubEvent()
-            const subEventIds = mapping.map((m) => m.subEventId)
+            // Build event selections format for API
+            const eventSelections = Object.entries(competitionCategories)
+                .filter(([_, categoryIds]) => categoryIds.length > 0)
+                .map(([competitionId, categoryIds]) => {
+                    // Group categories by subEvent
+                    const subEventGroups: { [subEventId: string]: string[] } = {}
 
-            // Add structured mapping to formData as requested: array of objects with subEventId and its categories
-            mapping.forEach((m, idx) => {
-                formData.append(`selections[${idx}][subEventId]`, m.subEventId)
-                m.categoryIds.forEach((catId, cIdx) => {
-                    formData.append(`selections[${idx}][categoryIds][${cIdx}]`, catId)
+                    categoryIds.forEach(categoryId => {
+                        // Find which subEvent this category belongs to
+                        const subEvent = eventData?.sub_events.find(se =>
+                            se.categories.some(cat => cat.id === categoryId)
+                        )
+                        if (subEvent) {
+                            if (!subEventGroups[subEvent.id]) {
+                                subEventGroups[subEvent.id] = []
+                            }
+                            subEventGroups[subEvent.id].push(categoryId)
+                        }
+                    })
+
+                    return {
+                        competitionId,
+                        subEvents: Object.entries(subEventGroups).map(([subEventId, catIds]) => ({
+                            subEventId,
+                            categoryIds: catIds
+                        }))
+                    }
                 })
-            })
-
-            // New: Group by competition with nested subEvents and categoryIds (Option 3)
-            const uniqueCompetitionIds = registrationType === "team"
-                ? teamCompetitions
-                : Array.from(new Set(riders.flatMap((r) => r.competitions)))
-
-            const eventSelections = uniqueCompetitionIds.map((competitionId) => ({
-                competitionId,
-                subEvents: mapping.map((m) => ({
-                    subEventId: m.subEventId,
-                    categoryIds: m.categoryIds,
-                })),
-            }))
 
             formData.append("eventSelections", JSON.stringify(eventSelections))
-
-            // if (registrationType === "team") {
-            //     teamCompetitions.forEach((competitionId, index) => {
-            //         formData.append(`competitions[${index}]`, competitionId)
-            //     })
-            // }
 
             riders.forEach((rider, riderIndex) => {
                 formData.append(`riders[${riderIndex}][name]`, rider.name)
@@ -666,12 +683,6 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                 formData.append(`riders[${riderIndex}][phone]`, rider.phone)
                 formData.append(`riders[${riderIndex}][email]`, rider.email)
                 formData.append(`riders[${riderIndex}][password]`, rider.password);
-
-                if (registrationType === "individual") {
-                    rider.competitions.forEach((competitionId, compIndex) => {
-                        formData.append(`riders[${riderIndex}][competitions][${compIndex}]`, competitionId)
-                    })
-                }
 
                 // Handle file uploads according to middleware expectations
                 const fileFromState = rider.profileImage
@@ -692,9 +703,7 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                 }
             })
 
-
             console.log("Form data:", Object.fromEntries(formData))
-            
 
             await axios.post("https://bharat-sports-tamt2.ondigitalocean.app/event-participants/register/4", formData, {
                 headers: {
@@ -703,6 +712,25 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
             })
             toast.success("Registration submitted successfully!")
             onClose()
+            setRiders([
+                {
+                    id: "1",
+                    name: "",
+                    efiId: "",
+                    dateOfBirth: "",
+                    age: 0,
+                    gender: "",
+                    ageCategory: "",
+                    competitions: [],
+                    phone: "",
+                    email: "",
+                    password: "",
+                    confirmPassword: "",
+                    profileImage: null,
+                    profileImagePreview: "",
+                },
+            ])
+            setTeamName("")
         } catch (err: any) {
             console.error("Registration error:", err)
             setError(err?.response?.data?.message || "Registration failed. Please try again.")
@@ -710,6 +738,7 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
             setSubmitting(false)
         }
     }
+
     // Reset form when registration type changes
     useEffect(() => {
         if (registrationType === "individual") {
@@ -732,7 +761,6 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                 },
             ])
             setTeamName("")
-            setTeamCompetitions([])
         } else {
             setRiders([
                 {
@@ -769,7 +797,8 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                 },
             ])
         }
-        setSelectedCategories([])
+        // Reset competition categories
+        setCompetitionCategories({})
     }, [registrationType])
 
     if (!isOpen) return null
@@ -1014,7 +1043,12 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                                     <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                                         {/* Profile Image Upload */}
                                         <div className="md:col-span-2">
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Profile Image</label>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Profile Image <span className="text-red-500">*</span>
+                                            </label>
+                                            <p className="text-xs text-gray-500 mb-2">
+                                                Please upload a profile image in JPG, JPEG, or PNG format with a maximum size of 1MB.
+                                            </p>
                                             <div className="relative">
                                                 <div
                                                     className={`w-20 h-20 rounded-full border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden ${validationErrors[rider.id]?.profileImage ? "border-red-300 bg-red-50" : "border-gray-300"
@@ -1175,33 +1209,83 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
 
                                     {/* Competition Selection (only for individual registration) */}
                                     {registrationType === "individual" && (
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Select Competitions * (₹1000 per category per competition)
-                                            </label>
-                                            <div
-                                                className={`grid grid-cols-1 md:grid-cols-3 gap-3 p-3 border rounded-lg ${validationErrors[rider.id]?.competitions ? "border-red-300 bg-red-50" : "border-gray-200"
-                                                    }`}
-                                            >
+                                        <div className="mt-8">
+                                            <h3 className="text-xl font-semibold text-gray-800 mb-4">Select Competitions and Categories</h3>
+
+                                            {/* Gate message if rider info incomplete */}
+                                            {!isRiderInfoComplete(riders[0]) && (
+                                                <div className="p-4 border border-amber-200 bg-amber-50 rounded-lg mb-4 text-sm text-amber-800">
+                                                    Please fill Date of Birth and Gender for the rider to see eligible categories.
+                                                </div>
+                                            )}
+
+                                            <div className="space-y-6">
                                                 {visibleCompetitions.map((comp) => (
-                                                    <label key={comp.id} className="flex items-center space-x-2 cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={rider.competitions.includes(comp.id)}
-                                                            onChange={() => toggleCompetition(comp.id)}
-                                                            className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
-                                                        />
-                                                        <span className="text-sm text-gray-700">{comp.name}</span>
-                                                    </label>
+                                                    <div key={comp.id} className="border border-gray-200 rounded-lg p-6">
+                                                        <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                                            <LuTrophy className="w-5 h-5 mr-2 text-pink-600" />
+                                                            {comp.name}
+                                                            <span className="ml-3 text-sm text-gray-500">
+                                                                ({getCategoriesForCompetition(comp.id).length} categories selected)
+                                                            </span>
+                                                        </h4>
+
+                                                        {/* Show message if rider info not complete */}
+                                                        {!isRiderInfoComplete(riders[0]) ? (
+                                                            <p className="text-gray-500 text-sm py-4">
+                                                                Complete rider information to see available categories.
+                                                            </p>
+                                                        ) : (
+                                                            <div className="space-y-4">
+                                                                {eventData.sub_events.map((subEvent) => {
+                                                                    const eligibleCategories = getEligibleCategoriesBySubEvent(subEvent.id)
+                                                                    if (eligibleCategories.length === 0) return null
+
+                                                                    return (
+                                                                        <div key={subEvent.id}>
+                                                                            <h5 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">
+                                                                                {subEvent.name}
+                                                                            </h5>
+                                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                                                {eligibleCategories.map((category) => (
+                                                                                    <label key={category.id} className="flex items-start space-x-3 cursor-pointer p-3 hover:bg-gray-50 rounded-lg border border-transparent hover:border-gray-200 transition-all">
+                                                                                        <input
+                                                                                            type="checkbox"
+                                                                                            checked={getCategoriesForCompetition(comp.id).includes(category.id)}
+                                                                                            onChange={() => toggleCategoryForCompetition(comp.id, category.id)}
+                                                                                            className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500 mt-1"
+                                                                                        />
+                                                                                        <div className="flex-1">
+                                                                                            <span className="text-sm font-medium text-gray-800">{category.category_name}</span>
+                                                                                            <div className="text-xs text-gray-500 mt-1 space-y-1">
+                                                                                                {category.age_group && <div>Age: {category.age_group}</div>}
+                                                                                                {category.gender_restriction && category.gender_restriction !== "mixed" && (
+                                                                                                    <div>Gender: {category.gender_restriction}</div>
+                                                                                                )}
+                                                                                                {/* <div className="text-pink-600 font-medium">₹1,000</div> */}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </label>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                    )
+                                                                })}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 ))}
+
                                                 {visibleCompetitions.length === 0 && (
-                                                    <div className="col-span-full text-sm text-gray-500">
+                                                    <div className="text-center py-8 text-gray-500">
                                                         No competitions available within event dates.
                                                     </div>
                                                 )}
                                             </div>
-                                            {validationErrors[rider.id]?.competitions && (
-                                                <p className="text-red-500 text-xs mt-1">{validationErrors[rider.id].competitions}</p>
+
+                                            {/* Validation Error for Individual */}
+                                            {validationErrors.team?.categories && (
+                                                <p className="text-red-500 text-sm mt-2">{validationErrors.team.categories}</p>
                                             )}
                                         </div>
                                     )}
@@ -1211,120 +1295,87 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
 
                         {/* Competition Selection (for team registration) */}
                         {registrationType === "team" && (
-                            <div className="mt-6">
-                                <h3 className="text-xl font-semibold text-gray-800 mb-4">Team Competitions</h3>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Select Competitions * (₹1000 per category per competition)
-                                </label>
-                                <div
-                                    className={`grid grid-cols-1 md:grid-cols-3 gap-3 p-3 border rounded-lg ${validationErrors.team?.categories ? "border-red-300 bg-red-50" : "border-gray-200"
-                                        }`}
-                                >
+                            <div className="mt-8">
+                                <h3 className="text-xl font-semibold text-gray-800 mb-4">Team Competitions and Categories</h3>
+
+                                {/* Gate message if team info incomplete */}
+                                {!areAllRidersInfoComplete(riders) && (
+                                    <div className="p-4 border border-amber-200 bg-amber-50 rounded-lg mb-4 text-sm text-amber-800">
+                                        Please fill Date of Birth and Gender for all team members to see eligible categories.
+                                    </div>
+                                )}
+
+                                <div className="space-y-6">
                                     {visibleCompetitions.map((comp) => (
-                                        <label key={comp.id} className="flex items-center space-x-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={teamCompetitions.includes(comp.id)}
-                                                onChange={() => toggleCompetition(comp.id)}
-                                                className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
-                                            />
-                                            <span className="text-sm text-gray-700">{comp.name}</span>
-                                        </label>
+                                        <div key={comp.id} className="border border-gray-200 rounded-lg p-6">
+                                            <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                                <LuTrophy className="w-5 h-5 mr-2 text-pink-600" />
+                                                {comp.name}
+                                                <span className="ml-3 text-sm text-gray-500">
+                                                    ({getCategoriesForCompetition(comp.id).length} categories selected)
+                                                </span>
+                                            </h4>
+
+                                            {/* Show message if team info not complete */}
+                                            {!areAllRidersInfoComplete(riders) ? (
+                                                <p className="text-gray-500 text-sm py-4">
+                                                    Complete all team members' information to see available categories.
+                                                </p>
+                                            ) : (
+                                                <div className="space-y-4">
+                                                    {eventData.sub_events.map((subEvent) => {
+                                                        const eligibleCategories = getEligibleCategoriesBySubEvent(subEvent.id)
+                                                        if (eligibleCategories.length === 0) return null
+
+                                                        return (
+                                                            <div key={subEvent.id}>
+                                                                <h5 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">
+                                                                    {subEvent.name}
+                                                                </h5>
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                                    {eligibleCategories.map((category) => (
+                                                                        <label key={category.id} className="flex items-start space-x-3 cursor-pointer p-3 hover:bg-gray-50 rounded-lg border border-transparent hover:border-gray-200 transition-all">
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                checked={getCategoriesForCompetition(comp.id).includes(category.id)}
+                                                                                onChange={() => toggleCategoryForCompetition(comp.id, category.id)}
+                                                                                className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500 mt-1"
+                                                                            />
+                                                                            <div className="flex-1">
+                                                                                <span className="text-sm font-medium text-gray-800">{category.category_name}</span>
+                                                                                <div className="text-xs text-gray-500 mt-1 space-y-1">
+                                                                                    {category.age_group && <div>Age: {category.age_group}</div>}
+                                                                                    {category.gender_restriction && category.gender_restriction !== "mixed" && (
+                                                                                        <div>Gender: {category.gender_restriction}</div>
+                                                                                    )}
+                                                                                    <div>Team size: {category.min_size_of_team ?? 2}-{category.max_size_of_team ?? 100} members</div>
+                                                                                    <div className="text-pink-600 font-medium">₹1,000</div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </label>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
                                     ))}
+
                                     {visibleCompetitions.length === 0 && (
-                                        <div className="col-span-full text-sm text-gray-500">
+                                        <div className="text-center py-8 text-gray-500">
                                             No competitions available within event dates.
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Validation Error for Team */}
                                 {validationErrors.team?.categories && (
-                                    <p className="text-red-500 text-xs mt-1">{validationErrors.team.categories}</p>
+                                    <p className="text-red-500 text-sm mt-2">{validationErrors.team.categories}</p>
                                 )}
                             </div>
                         )}
-
-                        {/* Category Selection */}
-                        <div className="mt-8">
-                            <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                                {registrationType === "team" ? "Team Category Selection" : "Category Selection"}
-                            </h3>
-
-                            {/* Sub-Event Selection Tabs */}
-                            <div className="border-b border-gray-200 mb-4">
-                                <div className="flex overflow-x-auto">
-                                    {eventData.sub_events.map((subEvent) => (
-                                        <button
-                                            key={subEvent.id}
-                                            type="button"
-                                            onClick={() => setActiveSubEvent(subEvent.id)}
-                                            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeSubEvent === subEvent.id
-                                                ? "border-pink-500 text-pink-600 bg-pink-50"
-                                                : "border-transparent text-gray-500 hover:text-gray-700"
-                                                }`}
-                                        >
-                                            {subEvent.name}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Gate message if rider(s) info incomplete */}
-                            {showCategoriesGateMessage && (
-                                <div className="p-4 border border-amber-200 bg-amber-50 rounded-lg mb-3 text-sm text-amber-800">
-                                    Please fill Date of Birth and Gender{" "}
-                                    {registrationType === "team" ? "for all team members" : "for the rider"} to see eligible categories.
-                                </div>
-                            )}
-
-                            {/* Category List */}
-                            <div
-                                className={`border rounded-lg ${validationErrors.team?.categories ? "border-red-300 bg-red-50" : "border-gray-200"
-                                    }`}
-                            >
-                                <div className="p-4">
-                                    {!showCategoriesGateMessage && categoriesToShow.length > 0 && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            {categoriesToShow.map((category) => (
-                                                <label
-                                                    key={category.id}
-                                                    className="flex items-start space-x-2 cursor-pointer p-2 hover:bg-gray-50 rounded"
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedCategories.includes(category.id)}
-                                                        onChange={() => toggleCategory(category.id)}
-                                                        className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500 mt-1"
-                                                    />
-                                                    <div>
-                                                        <span className="text-sm font-medium text-gray-700">{category.category_name}</span>
-                                                        <div className="text-xs text-gray-500 mt-1">
-                                                            {category.age_group && <div>Age: {category.age_group}</div>}
-                                                            {category.gender_restriction && category.gender_restriction !== "mixed" && (
-                                                                <div>Gender: {category.gender_restriction}</div>
-                                                            )}
-                                                            {registrationType === "team" && (
-                                                                <div>
-                                                                    Team size: {category.min_size_of_team ?? 2}-{category.max_size_of_team ?? 100} members
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </label>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {!showCategoriesGateMessage && categoriesToShow.length === 0 && (
-                                        <p className="text-gray-500 text-sm text-center py-4">
-                                            No eligible categories for the current selection. Adjust rider info or team size.
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                            {validationErrors.team?.categories && (
-                                <p className="text-red-500 text-xs mt-1">{validationErrors.team.categories}</p>
-                            )}
-                        </div>
 
                         {/* Parent/Coach Information */}
                         {/* <div className="mt-8 space-y-4">
@@ -1359,10 +1410,9 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                                 <div>
                                     <h3 className="text-xl font-semibold text-gray-800">Total Registration Fee</h3>
                                     <p className="text-sm text-gray-600 mt-1">
-                                        {registrationType === "team"
-                                            ? `${teamCompetitions.length} competition entries`
-                                            : `${riders.reduce((total, rider) => total + rider.competitions.length, 0)} competition entries`}{" "}
-                                        × {selectedCategories.length} categories × ₹1000
+                                        {Object.entries(competitionCategories).reduce((total, [_, categoryIds]) =>
+                                            total + categoryIds.length, 0
+                                        )} total category selections × ₹1000
                                     </p>
                                 </div>
                                 <div className="text-right">
