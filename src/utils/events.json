@@ -6,6 +6,7 @@
             "title": "The Penta Grand 2022",
             "description": "A premier equestrian championship featuring National Qualifiers, Ghaziabad Horse Show, U.P. Horse Show & NCR Inter-School Championship, held from 10 - 18 December 2022 at GHRC, Ghaziabad, uniting top teams from the Army, Police, Paramilitary, schools, and clubs nationwide.",
             "pastPrograms": true,
+            "bannerImage": "",
             "location": "Gurukul",
             "image": "/assets/images/past-events/22/7.JPG",
             "eventImages": [
@@ -32,6 +33,7 @@
             "title": "The Penta Grand 2021",
             "description": "A premier equestrian championship featuring National Qualifiers, Ghaziabad Horse Show, U.P. Horse Show & NCR Inter-School Championship, held from 10 - 18 December 2021 at GHRC, Ghaziabad, uniting top teams from the Army, Police, Paramilitary, schools, and clubs nationwide.",
             "pastPrograms": true,
+            "bannerImage": "",
             "location": "Gurukul",
             "image": "/assets/images/past-events/21/6.JPG",
             "eventImages": [
@@ -54,6 +56,7 @@
             "description": "Equiwings School of Equestrian Excellence proudly hosts the World Equestrian Tent Pegging 2013, a premier equestrian event in the NCR region.",
             "location": "Tau Devilal Stadium Gurgaon",
             "pastPrograms": true,
+            "bannerImage": "",
             "image": "/assets/images/past-events/13/7.JPG",
             "eventImages": [
                 "/assets/images/past-events/13/1.JPG",
@@ -70,20 +73,22 @@
     ],
     "upcomingEvents": [
         {
+            "id": "dubai-polo-pegging-premier-league-2025",
             "slug": "dubai-polo-pegging-premier-league-2025",
             "title": "Polo & Tent Pegging Premier League",
             "description": "A grand celebration of UAE–India friendship, taking place at the Dubai Polo & Equestrian Club from 5th – 7th December 2025.",
-            "image": "/assets/images/home/announcement/dubai_polo.jpeg",
-            "bannerImage": "/assets/images/home/announcement/penta_grand_banner.jpeg",
+            "image": "/assets/images/upcoming-events/dubai_polo.jpeg",
+            "bannerImage": "/assets/images/upcoming-events/dubai_polo.jpeg",
             "location": "Dubai",
             "date": "5th – 7th December 2025"
         },
         {
+            "id": "the-penta-grand-2025",
             "slug": "the-penta-grand-2025",
             "title": "The Penta Grand 2025",
             "description": "A premier equestrian championship featuring National Qualifiers, Ghaziabad Horse Show, U.P. Horse Show & NCR Inter-School Championship, will be held from 9th – 18th October 2025 at GHRC, Ghaziabad, uniting top teams from the Army, Police, Paramilitary, schools, and clubs nationwide.",
-            "image": "/assets/images/home/announcement/penta_grand.jpeg",
-            "bannerImage": "/assets/images/home/announcement/penta_grand_banner.jpeg",
+            "image": "/assets/images/upcoming-events/penta_grand.jpeg",
+            "bannerImage": "/assets/images/upcoming-events/penta_grand_banner.jpeg",
             "location": "GHRC, Ghaziabad",
             "date": "9th – 18th October 2025"
         }

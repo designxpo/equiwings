@@ -11,17 +11,19 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { useRouter } from 'next/navigation';
-import PAST_EVENTS_DATA from '@/utils/events.json'
+import EVENTS_DATA from '@/utils/events.json'
 
 // ========== TYPES ==========
 interface ProgramCard {
   id: string | number;
+  slug?: string;
   date?: string;
   title: string;
   description: string;
   pastPrograms?: boolean;
   location?: string;
   image?: string;
+  bannerImage?: string;
 }
 
 interface ApiResponse {
@@ -137,7 +139,7 @@ const EnhancedSlider: React.FC<{
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-500 group-hover:scale-110"
         style={{
-          backgroundImage: `url(${program.image || defaultImage})`
+          backgroundImage: `url(${program.bannerImage || program.image || defaultImage})`,
         }}
       />
 
@@ -273,43 +275,20 @@ const ProgramCards: React.FC = () => {
   const variants = useAnimationVariants();
   const swiperConfig = useSwiperConfig();
 
-  // Default image fallback
-  const defaultImage = "/assets/images/services/school.jpg";
-
   // Fetch upcoming programs from API and set past programs from static data
   useEffect(() => {
     const fetchPrograms = async () => {
       try {
         setLoading(true);
-        const response = await axiosInstance.get('/customers/announcements');
-        const fetchedPrograms = response.data.announcement || [];
-
-        // Map the API data for upcoming events
-        const formattedUpcomingPrograms: ProgramCard[] = fetchedPrograms.map((item: any, index: number) => ({
-          id: item._id || `upcoming-${index + 1}`,
-          title: item.title || "Upcoming Event",
-          description: item.description || "No description available",
-          image: item.image || defaultImage,
-          date: item.date ? new Date(item.date).toLocaleDateString('en-US', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-          }).toUpperCase() : undefined,
-          pastPrograms: false,
-        }));
-
         // Set the formatted programs for upcoming events
-        setUpcomingPrograms(formattedUpcomingPrograms);
-
+        setUpcomingPrograms(EVENTS_DATA.upcomingEvents as ProgramCard[]);
         // Set past programs from static data
-        setPastPrograms(PAST_EVENTS_DATA.pastEvents as ProgramCard[]);
+        setPastPrograms(EVENTS_DATA.pastEvents as ProgramCard[]);
         setError(null);
       } catch (err) {
-        console.error('Error fetching programs:', err);
-        setError("Failed to load programs");
-        setUpcomingPrograms([]);
+        setUpcomingPrograms(EVENTS_DATA.upcomingEvents as ProgramCard[]);
         // Still set past programs even if API fails
-        setPastPrograms(PAST_EVENTS_DATA.pastEvents as ProgramCard[]);
+        setPastPrograms(EVENTS_DATA.pastEvents as ProgramCard[]);
       } finally {
         setLoading(false);
       }

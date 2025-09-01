@@ -2,13 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import axiosInstance from "@/lib/config/axios";
-import PAST_EVENTS_DATA from '@/utils/events.json';
+import EVENTS_DATA from '@/utils/events.json';
 
 interface EventData {
     id: string;
     title: string;
     description: string;
     image?: string;
+    bannerImage?: string;
     date?: string;
     location?: string;
     isPastEvent: boolean;
@@ -23,8 +24,6 @@ const Hero: React.FC<HeroProps> = ({ slug }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const defaultImage = "/assets/images/services/school.jpg";
-
     useEffect(() => {
         const fetchEventData = async () => {
             try {
@@ -38,7 +37,7 @@ const Hero: React.FC<HeroProps> = ({ slug }) => {
 
                 if (isPastEvent) {
                     // Search in past events data
-                    const pastEvent = PAST_EVENTS_DATA.pastEvents.find((event: any) => {
+                    const pastEvent = EVENTS_DATA.pastEvents.find((event: any) => {
                         const eventSlug = event.title.toLowerCase().replace(/&/g, 'and').replace(/\s+/g, '-');
                         return eventSlug === cleanSlug;
                     });
@@ -48,33 +47,27 @@ const Hero: React.FC<HeroProps> = ({ slug }) => {
                             id: pastEvent.id,
                             title: pastEvent.title,
                             description: pastEvent.description,
-                            image: pastEvent.image || defaultImage,
+                            bannerImage: pastEvent.bannerImage,
+                            image: pastEvent.image,
                             date: pastEvent.date,
                             location: pastEvent.location || "TBA",
                             isPastEvent: true
                         };
                     }
                 } else {
-                    // Search in upcoming events from API
-                    const response = await axiosInstance.get('/customers/announcements');
-                    const upcomingEvents = response.data.announcement || [];
 
-                    const upcomingEvent = upcomingEvents.find((event: any) => {
-                        const eventSlug = (event.title || '').toLowerCase().replace(/&/g, 'and').replace(/\s+/g, '-');
+                    const upcomingEvent = EVENTS_DATA.upcomingEvents.find((event: any) => {
+                        const eventSlug = event.title.toLowerCase().replace(/&/g, 'and').replace(/\s+/g, '-');
                         return eventSlug === cleanSlug;
                     });
-
                     if (upcomingEvent) {
                         foundEvent = {
-                            id: upcomingEvent._id,
+                            id: upcomingEvent.id,
                             title: upcomingEvent.title || "Upcoming Event",
                             description: upcomingEvent.description || "No description available",
-                            image: upcomingEvent.image || defaultImage,
-                            date: upcomingEvent.date ? new Date(upcomingEvent.date).toLocaleDateString('en-US', {
-                                day: 'numeric',
-                                month: 'long',
-                                year: 'numeric'
-                            }) : undefined,
+                            image: upcomingEvent.image,
+                            bannerImage: upcomingEvent.bannerImage,
+                            date: upcomingEvent.date,
                             location: upcomingEvent.location || "TBA",
                             isPastEvent: false
                         };
@@ -93,26 +86,6 @@ const Hero: React.FC<HeroProps> = ({ slug }) => {
 
         fetchEventData();
     }, [slug]);
-
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                duration: 1,
-                staggerChildren: 0.3
-            }
-        }
-    };
-
-    const itemVariants = {
-        hidden: { opacity: 0, y: 30 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            transition: { duration: 0.8 }
-        }
-    };
 
     if (loading) {
         return (
@@ -139,7 +112,7 @@ const Hero: React.FC<HeroProps> = ({ slug }) => {
     return (
         <section
             className="relative h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: `url(${eventData.image})` }}
+            style={{ backgroundImage: `url(${eventData.bannerImage || eventData.image})` }}
         >
             {/* Overlay */}
             {/* <div className="absolute inset-0 bg-black opacity-50"></div> */}
