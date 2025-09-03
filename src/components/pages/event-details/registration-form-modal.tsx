@@ -129,7 +129,7 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    const [registrationType, setRegistrationType] = useState<"individual" | "team">("individual")
+    const [registrationType, setRegistrationType] = useState<"individual" | "team" | "paired">("individual")
     const [teamName, setTeamName] = useState("")
     const [riders, setRiders] = useState<RiderEntry[]>([
         {
@@ -430,6 +430,27 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                     if (!isAgeAllowed(cat.min_age_years, cat.max_age_years, riderAge)) return false
                     return true
                 })
+            } else if (registrationType === "paired") {
+                if (!areAllRidersInfoComplete(riders) || riders.length !== 2) return []
+                const riderAges = riders.map((r) => calculateAge(r.dateOfBirth))
+
+                return subEvent.categories.filter((cat) => {
+                    // entry_type filter - paired can participate in mixed categories
+                    if (!(cat.entry_type === "mixed")) return false
+
+                    // paired gender filter
+                    if (!isTeamGenderAllowed(cat.gender_restriction, riders)) return false
+
+                    // paired age filter: require every rider to be eligible if min/max provided
+                    const minAge = cat.min_age_years
+                    const maxAge = cat.max_age_years
+                    if (minAge != null || maxAge != null) {
+                        const allOk = riderAges.every((age) => isAgeAllowed(minAge, maxAge, age))
+                        if (!allOk) return false
+                    }
+
+                    return true
+                })
             } else {
                 if (!areAllRidersInfoComplete(riders)) return []
                 const riderAges = riders.map((r) => calculateAge(r.dateOfBirth))
@@ -486,27 +507,30 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
     }, [eventData, getEligibleCategoriesBySubEvent])
 
 
+    // Replace the calculateRiderTotal function with this:
     const calculateRiderTotal = (rider: RiderEntry): number => {
         if (!eventData) return 0
 
-        const baseFee = 1000
         let total = 0
 
         // Calculate based on competitions with selected categories
         Object.entries(competitionCategories).forEach(([competitionId, categoryIds]) => {
             if (categoryIds.length > 0) {
-                total += categoryIds.length * baseFee
+                if (registrationType === "individual") {
+                    total += categoryIds.length * 1000 // ₹1000 per category for individual
+                } else {
+                    total += categoryIds.length * 2000 // ₹2000 per category for team/paired
+                }
             }
         })
 
         return total
     }
 
+    // Also update the calculateTotal function:
     const calculateTotal = () => {
-        if (registrationType === "team") {
-            return calculateRiderTotal(riders[0]) // Same fee for whole team
-        }
-        return calculateRiderTotal(riders[0]) // Since all riders have same competition-category selections
+        // For team and paired, the total is calculated once (not per rider)
+        return calculateRiderTotal(riders[0])
     }
 
     const validateForm = (): boolean => {
@@ -554,12 +578,19 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
             }
         }
 
-        // Individual validation
-        if (registrationType === "individual") {
+        // Individual and Paired validation
+        if (registrationType === "individual" || registrationType === "paired") {
             const hasAnySelection = Object.values(competitionCategories).some(cats => cats.length > 0)
             if (!hasAnySelection) {
                 if (!errors.team) errors.team = {}
                 errors.team.categories = "Please select at least one category for any competition"
+                hasErrors = true
+            }
+
+            // For paired, ensure exactly 2 riders
+            if (registrationType === "paired" && riders.length !== 2) {
+                if (!errors.team) errors.team = {}
+                errors.team.categories = "Paired registration requires exactly 2 riders"
                 hasErrors = true
             }
         }
@@ -694,7 +725,11 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                     if (registrationType === "individual") {
                         formData.append("file", fileToSend, fileToSend.name)
                     }
-                    // For team registration, use the specific field names expected by middleware
+                    // For paired registration, use the specific field names
+                    else if (registrationType === "paired") {
+                        formData.append(`riders[${riderIndex}][profileImage]`, fileToSend, fileToSend.name)
+                    }
+                    // For team registration
                     else {
                         formData.append(`riders[${riderIndex}][profileImage]`, fileToSend, fileToSend.name)
                     }
@@ -761,6 +796,42 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                 },
             ])
             setTeamName("")
+        } else if (registrationType === "paired") {
+            setRiders([
+                {
+                    id: "1",
+                    name: "",
+                    efiId: "",
+                    dateOfBirth: "",
+                    age: 0,
+                    gender: "",
+                    ageCategory: "",
+                    competitions: [],
+                    phone: "",
+                    email: "",
+                    password: "",
+                    confirmPassword: "",
+                    profileImage: null,
+                    profileImagePreview: "",
+                },
+                {
+                    id: "2",
+                    name: "",
+                    efiId: "",
+                    dateOfBirth: "",
+                    age: 0,
+                    gender: "",
+                    ageCategory: "",
+                    competitions: [],
+                    phone: "",
+                    email: "",
+                    password: "",
+                    confirmPassword: "",
+                    profileImage: null,
+                    profileImagePreview: "",
+                },
+            ])
+            setTeamName("")
         } else {
             setRiders([
                 {
@@ -800,6 +871,7 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
         // Reset competition categories
         setCompetitionCategories({})
     }, [registrationType])
+
 
     if (!isOpen) return null
 
@@ -882,7 +954,7 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                         {/* Registration Type Selection */}
                         <div className="mb-8">
                             <h3 className="text-xl font-semibold text-gray-800 mb-4">Registration Type</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div
                                     className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${registrationType === "individual"
                                         ? "border-pink-500 bg-pink-50"
@@ -900,6 +972,25 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                                         <div className="ml-4">
                                             <h4 className="font-medium text-gray-800">Individual</h4>
                                             <p className="text-sm text-gray-600 mt-1">Register as an individual competitor</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div
+                                    className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${registrationType === "paired" ? "border-pink-500 bg-pink-50" : "border-gray-200 hover:border-pink-300"
+                                        }`}
+                                    onClick={() => setRegistrationType("paired")}
+                                >
+                                    <div className="flex items-center">
+                                        <div
+                                            className={`p-3 rounded-lg ${registrationType === "paired" ? "bg-pink-100 text-pink-600" : "bg-gray-100 text-gray-600"
+                                                }`}
+                                        >
+                                            <LuUsers className="w-6 h-6" />
+                                        </div>
+                                        <div className="ml-4">
+                                            <h4 className="font-medium text-gray-800">Paired</h4>
+                                            <p className="text-sm text-gray-600 mt-1">Register as a pair (2 riders)</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1005,6 +1096,13 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                             </div>
                         )}
 
+                        {/* Paired Registration Header */}
+                        {registrationType === "paired" && (
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl font-semibold text-gray-800">Paired Registration (2 Riders)</h3>
+                            </div>
+                        )}
+
                         {/* Individual Rider Title */}
                         {registrationType === "individual" && (
                             <h3 className="text-xl font-semibold text-gray-800 mb-6">Rider Information</h3>
@@ -1022,14 +1120,15 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                                     <div className="flex items-center justify-between">
                                         <h4 className="text-lg font-medium text-gray-800 flex items-center">
                                             <LuUser className="w-5 h-5 mr-2 text-pink-600" />
-                                            {registrationType === "team" ? `Team Member #${index + 1}` : "Rider Information"}
+                                            {registrationType === "team" ? `Team Member #${index + 1}` :
+                                                registrationType === "paired" ? `Rider #${index + 1}` : "Rider Information"}
                                             {rider.ageCategory && (
                                                 <span className="ml-3 px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
                                                     Age: {rider.age}
                                                 </span>
                                             )}
                                         </h4>
-                                        {registrationType === "team" && riders.length > 2 && (
+                                        {((registrationType === "team" && riders.length > 2) || (registrationType === "paired" && riders.length > 2)) && (
                                             <button
                                                 type="button"
                                                 onClick={() => removeRider(rider.id)}
@@ -1293,6 +1392,89 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                             ))}
                         </div>
 
+                        {/* Competition Selection (for paired registration) */}
+                        {registrationType === "paired" && (
+                            <div className="mt-8">
+                                <h3 className="text-xl font-semibold text-gray-800 mb-4">Paired Competitions and Categories</h3>
+
+                                {/* Gate message if paired info incomplete */}
+                                {!areAllRidersInfoComplete(riders) && (
+                                    <div className="p-4 border border-amber-200 bg-amber-50 rounded-lg mb-4 text-sm text-amber-800">
+                                        Please fill Date of Birth and Gender for both riders to see eligible categories.
+                                    </div>
+                                )}
+
+                                <div className="space-y-6">
+                                    {visibleCompetitions.map((comp) => (
+                                        <div key={comp.id} className="border border-gray-200 rounded-lg p-6">
+                                            <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                                <LuTrophy className="w-5 h-5 mr-2 text-pink-600" />
+                                                {comp.name}
+                                                <span className="ml-3 text-sm text-gray-500">
+                                                    ({getCategoriesForCompetition(comp.id).length} categories selected)
+                                                </span>
+                                            </h4>
+
+                                            {/* Show message if paired info not complete */}
+                                            {!areAllRidersInfoComplete(riders) ? (
+                                                <p className="text-gray-500 text-sm py-4">
+                                                    Complete both riders' information to see available categories.
+                                                </p>
+                                            ) : (
+                                                <div className="space-y-4">
+                                                    {eventData.sub_events.map((subEvent) => {
+                                                        const eligibleCategories = getEligibleCategoriesBySubEvent(subEvent.id)
+                                                        if (eligibleCategories.length === 0) return null
+
+                                                        return (
+                                                            <div key={subEvent.id}>
+                                                                <h5 className="text-sm font-semibold text-gray-700 mb-3 border-b border-gray-100 pb-2">
+                                                                    {subEvent.name}
+                                                                </h5>
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                                    {eligibleCategories.map((category) => (
+                                                                        <label key={category.id} className="flex items-start space-x-3 cursor-pointer p-3 hover:bg-gray-50 rounded-lg border border-transparent hover:border-gray-200 transition-all">
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                checked={getCategoriesForCompetition(comp.id).includes(category.id)}
+                                                                                onChange={() => toggleCategoryForCompetition(comp.id, category.id)}
+                                                                                className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500 mt-1"
+                                                                            />
+                                                                            <div className="flex-1">
+                                                                                <span className="text-sm font-medium text-gray-800">{category.category_name}</span>
+                                                                                <div className="text-xs text-gray-500 mt-1 space-y-1">
+                                                                                    {category.age_group && <div>Age: {category.age_group}</div>}
+                                                                                    {category.gender_restriction && category.gender_restriction !== "mixed" && (
+                                                                                        <div>Gender: {category.gender_restriction}</div>
+                                                                                    )}
+                                                                                    {/* <div className="text-pink-600 font-medium">₹1,000</div> */}
+                                                                                </div>
+                                                                            </div>
+                                                                        </label>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+
+                                    {visibleCompetitions.length === 0 && (
+                                        <div className="text-center py-8 text-gray-500">
+                                            No competitions available within event dates.
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Validation Error for Paired */}
+                                {validationErrors.team?.categories && (
+                                    <p className="text-red-500 text-sm mt-2">{validationErrors.team.categories}</p>
+                                )}
+                            </div>
+                        )}
+
                         {/* Competition Selection (for team registration) */}
                         {registrationType === "team" && (
                             <div className="mt-8">
@@ -1349,7 +1531,7 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                                                                                         <div>Gender: {category.gender_restriction}</div>
                                                                                     )}
                                                                                     <div>Team size: {category.min_size_of_team ?? 2}-{category.max_size_of_team ?? 100} members</div>
-                                                                                    <div className="text-pink-600 font-medium">₹1,000</div>
+                                                                                    {/* <div className="text-pink-600 font-medium">₹1,000</div> */}
                                                                                 </div>
                                                                             </div>
                                                                         </label>
@@ -1412,7 +1594,7 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                                     <p className="text-sm text-gray-600 mt-1">
                                         {Object.entries(competitionCategories).reduce((total, [_, categoryIds]) =>
                                             total + categoryIds.length, 0
-                                        )} total category selections × ₹1000
+                                        )} total category selections × ₹{registrationType === "individual" ? "1000" : "2000"}
                                     </p>
                                 </div>
                                 <div className="text-right">
