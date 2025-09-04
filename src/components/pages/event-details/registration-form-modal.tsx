@@ -992,8 +992,8 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                                             <LuUsers className="w-6 h-6" />
                                         </div>
                                         <div className="ml-4">
-                                            <h4 className="font-medium text-gray-800">Group</h4>
-                                            <p className="text-sm text-gray-600 mt-1">Register as a group (2 riders)</p>
+                                            <h4 className="font-medium text-gray-800">Pair</h4>
+                                            <p className="text-sm text-gray-600 mt-1">Register as a pair (2 riders)</p>
                                         </div>
                                     </div>
                                 </div>
