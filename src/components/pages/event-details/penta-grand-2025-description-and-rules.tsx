@@ -272,7 +272,7 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
                                 'Insurance coverage recommended for riders and ponies'
                             ],
                             prizes: 'Medals, Certificates, and Trophies for Champion Teams',
-                            registrationFee: 'Team Events: ₹2000 + GST | Individual: ₹1000 + GST',
+                            registrationFee: 'Team Events: ₹2000 | Individual: ₹1000',
                             contactInfo: 'Org. Secretary: +91-9266103170 | Email: gurukul.ghrc@gmail.com',
                             isPastEvent: false
                         };
@@ -519,11 +519,11 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
                                 <ul className="space-y-2">
                                     <li className="flex justify-between">
                                         <span>Team Events:</span>
-                                        <span>₹2000/- per team + 18% GST</span>
+                                        <span>₹2000/- per team</span>
                                     </li>
                                     <li className="flex justify-between">
                                         <span>Individual Events:</span>
-                                        <span>₹1000/- per exhibit + 18% GST</span>
+                                        <span>₹1000/- per exhibit</span>
                                     </li>
                                 </ul>
                             </div>
