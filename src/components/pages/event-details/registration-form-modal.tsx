@@ -98,6 +98,8 @@ interface RiderEntry {
     confirmPassword: string;
     profileImage: File | null;
     profileImagePreview: string;
+    ageCertificate: File | null;
+    ageCertificatePreview: string;
 }
 
 interface RegistrationFormProps {
@@ -116,6 +118,7 @@ type RiderFieldErrors = {
     password?: string;
     confirmPassword?: string;
     profileImage?: string
+    ageCertificate?: string
 }
 
 interface ValidationErrors {
@@ -146,7 +149,9 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
             password: '',
             confirmPassword: '',
             profileImage: null,
-            profileImagePreview: ''
+            profileImagePreview: '',
+            ageCertificate: null,
+            ageCertificatePreview: ''
         }
     ]);
 
@@ -185,7 +190,7 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
             setLoading(true)
             setError(null)
             // NOTE: Using event id directly as in the snippet (4). You can switch to eventId param if your API supports it.
-            const response = await axios.get<ApiResponse>(`https://bharat-sports-tamt2.ondigitalocean.app/event-participants/register/4`)
+            const response = await axios.get<ApiResponse>(`http://localhost:5000/event-participants/register/4`)
             if (response.data.success) {
                 const evt = response.data.data.event
                 setEventData(evt)
@@ -289,6 +294,8 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                 email: "",
                 profileImage: null,
                 profileImagePreview: "",
+                ageCertificate: null,
+                ageCertificatePreview: "",
             },
         ])
     }
@@ -369,6 +376,53 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
 
     const triggerImageUpload = (id: string) => {
         fileInputRefs.current[id]?.click()
+    }
+
+
+    const handleAgeCertificateUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files
+        if (!files || files.length === 0) return
+
+        const file = files[0]
+        if (!file.type.startsWith("image/") && !file.type.includes("pdf")) {
+            setValidationErrors((prev) => ({
+                ...prev,
+                [id]: { ...(prev[id] || {}), ageCertificate: "Please upload an image or PDF file" },
+            }))
+            return
+        }
+        if (file.size > 1 * 1024 * 1024) {
+            setValidationErrors((prev) => ({
+                ...prev,
+                [id]: { ...(prev[id] || {}), ageCertificate: "File must be less than 1MB" },
+            }))
+            return
+        }
+
+        if (file.type.startsWith("image/")) {
+            const reader = new FileReader()
+            reader.onload = (ev) => {
+                updateRider(id, "ageCertificatePreview", (ev.target?.result as string) || "")
+            }
+            reader.readAsDataURL(file)
+        } else {
+            updateRider(id, "ageCertificatePreview", "PDF uploaded")
+        }
+
+        updateRider(id, "ageCertificate", file)
+
+        if (validationErrors[id]?.ageCertificate) {
+            const newErrors = { ...validationErrors }
+            delete newErrors[id].ageCertificate
+            if (Object.keys(newErrors[id]).length === 0) {
+                delete newErrors[id]
+            }
+            setValidationErrors(newErrors)
+        }
+    }
+
+    const triggerAgeCertificateUpload = (id: string) => {
+        fileInputRefs.current[`${id}_age_cert`]?.click()
     }
 
     // Eligibility helpers
@@ -614,6 +668,12 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                 rErr.profileImage = "Profile image is required"
                 hasErrors = true
             }
+
+            if (!rider.ageCertificate) {
+                rErr.ageCertificate = "Age certificate is required"
+                hasErrors = true
+            }
+
             if (!rider.gender) {
                 rErr.gender = "Gender selection is required"
                 hasErrors = true
@@ -718,32 +778,38 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                 formData.append(`riders[${riderIndex}][email]`, rider.email)
                 formData.append(`riders[${riderIndex}][password]`, rider.password);
 
-                // Handle file uploads according to middleware expectations
+                // Handle profile image uploads (existing code)
                 const fileFromState = rider.profileImage
                 const fileFromInput = fileInputRefs.current[rider.id]?.files?.[0] || null
                 const fileToSend = fileFromState || fileFromInput
 
                 if (fileToSend) {
-                    // For individual registration, use the 'file' field name
                     if (registrationType === "individual") {
                         formData.append("file", fileToSend, fileToSend.name)
-                    }
-                    // For paired registration, use the specific field names
-                    else if (registrationType === "paired") {
+                    } else if (registrationType === "paired") {
+                        formData.append(`riders[${riderIndex}][profileImage]`, fileToSend, fileToSend.name)
+                    } else {
                         formData.append(`riders[${riderIndex}][profileImage]`, fileToSend, fileToSend.name)
                     }
-                    // For team registration
-                    else {
-                        formData.append(`riders[${riderIndex}][profileImage]`, fileToSend, fileToSend.name)
+                }
+
+                // **ADD THIS BLOCK FOR AGE CERTIFICATE UPLOAD**
+                const ageCertFromState = rider.ageCertificate
+                const ageCertFromInput = fileInputRefs.current[`${rider.id}_age_cert`]?.files?.[0] || null
+                const ageCertToSend = ageCertFromState || ageCertFromInput
+
+                if (ageCertToSend) {
+                    if (registrationType === "individual") {
+                        formData.append("ageCertificate", ageCertToSend, ageCertToSend.name)
+                    } else {
+                        formData.append(`riders[${riderIndex}][ageCertificate]`, ageCertToSend, ageCertToSend.name)
                     }
-                } else {
-                    console.warn(`No profile image found for rider ${rider.id}`)
                 }
             })
 
             console.log("Form data:", Object.fromEntries(formData))
 
-            await axios.post("https://bharat-sports-tamt2.ondigitalocean.app/event-participants/register/4", formData, {
+            await axios.post("http://localhost:5000/event-participants/register/4", formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -766,6 +832,8 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                     confirmPassword: "",
                     profileImage: null,
                     profileImagePreview: "",
+                    ageCertificate: null,
+                    ageCertificatePreview: "",
                 },
             ])
             setTeamName("")
@@ -796,6 +864,8 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                     confirmPassword: "",
                     profileImage: null,
                     profileImagePreview: "",
+                    ageCertificate: null,
+                    ageCertificatePreview: "",
                 },
             ])
             setTeamName("")
@@ -816,6 +886,8 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                     confirmPassword: "",
                     profileImage: null,
                     profileImagePreview: "",
+                    ageCertificate: null,
+                    ageCertificatePreview: "",
                 },
                 {
                     id: "2",
@@ -832,6 +904,8 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                     confirmPassword: "",
                     profileImage: null,
                     profileImagePreview: "",
+                    ageCertificate: null,
+                    ageCertificatePreview: "",
                 },
             ])
             setTeamName("")
@@ -852,6 +926,8 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                     confirmPassword: "",
                     profileImage: null,
                     profileImagePreview: "",
+                    ageCertificate: null,
+                    ageCertificatePreview: "",
                 },
                 {
                     id: "2",
@@ -868,6 +944,8 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                     confirmPassword: "",
                     profileImage: null,
                     profileImagePreview: "",
+                    ageCertificate: null,
+                    ageCertificatePreview: "",
                 },
             ])
         }
@@ -1307,6 +1385,50 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                                                 )}
                                             </div>
                                         </div>
+                                    </div>
+
+                                    {/* Age Certificate Upload */}
+                                    <div className="md:col-span-3">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Age Certificate <span className="text-red-500">*</span>
+                                        </label>
+                                        <p className="text-xs text-gray-500 mb-3">
+                                            Please upload a valid government-issued ID (e.g., Aadhaar Card, PAN Card, Passport, etc.). Supported file formats: JPG, JPEG, PNG, PDF. Maximum file size: 1 MB
+                                        </p>
+                                        <div className="flex items-center space-x-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => triggerAgeCertificateUpload(rider.id)}
+                                                className={`px-4 py-2 border-2 border-dashed rounded-lg hover:bg-gray-50 transition-colors ${validationErrors[rider.id]?.ageCertificate
+                                                    ? "border-red-300 bg-red-50"
+                                                    : "border-gray-300"
+                                                    }`}
+                                            >
+                                                <div className="flex items-center space-x-2">
+                                                    <LuCamera className="w-4 h-4 text-gray-400" />
+                                                    <span className="text-sm text-gray-600">
+                                                        {rider.ageCertificatePreview ? "Change Certificate" : "Upload Certificate"}
+                                                    </span>
+                                                </div>
+                                            </button>
+                                            {rider.ageCertificatePreview && (
+                                                <span className="text-sm text-green-600">
+                                                    {rider.ageCertificatePreview === "PDF uploaded" ? "PDF uploaded" : "Image uploaded"}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <input
+                                            type="file"
+                                            ref={(el) => {
+                                                fileInputRefs.current[`${rider.id}_age_cert`] = el
+                                            }}
+                                            onChange={(e) => handleAgeCertificateUpload(rider.id, e)}
+                                            accept="image/*,.pdf"
+                                            className="hidden"
+                                        />
+                                        {validationErrors[rider.id]?.ageCertificate && (
+                                            <p className="text-red-500 text-xs mt-1">{validationErrors[rider.id].ageCertificate}</p>
+                                        )}
                                     </div>
 
                                     {/* Competition Selection (only for individual registration) */}
