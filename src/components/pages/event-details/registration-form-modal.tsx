@@ -100,6 +100,7 @@ interface RiderEntry {
     profileImagePreview: string;
     ageCertificate: File | null;
     ageCertificatePreview: string;
+    exhibitor: string; // ADD THIS
 }
 
 interface RegistrationFormProps {
@@ -130,7 +131,7 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
     const [eventData, setEventData] = useState<EventData | null>(null)
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
-    const [error, setError] = useState<string | null>(null)
+    const [pairName, setPairName] = useState("")
 
     const [registrationType, setRegistrationType] = useState<"individual" | "team" | "paired">("individual")
     const [teamName, setTeamName] = useState("")
@@ -151,7 +152,9 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
             profileImage: null,
             profileImagePreview: '',
             ageCertificate: null,
-            ageCertificatePreview: ''
+            ageCertificatePreview: '',
+            exhibitor: ""
+
         }
     ]);
 
@@ -188,20 +191,16 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
     const fetchEventData = async () => {
         try {
             setLoading(true)
-            setError(null)
             // NOTE: Using event id directly as in the snippet (4). You can switch to eventId param if your API supports it.
-            const response = await axios.get<ApiResponse>(`https://bharat-sports-tamt2.ondigitalocean.app/event-participants/register/4`)
-            if (response.data.success) {
-                const evt = response.data.data.event
-                setEventData(evt)
-                if (evt.sub_events.length > 0) {
-                    setActiveSubEvent(evt.sub_events[0].id)
-                }
-            } else {
-                setError("Failed to fetch event data")
+            const response = await axios.get<ApiResponse>(`http://localhost:5000/event-participants/register/4`)
+            const evt = response.data.data.event
+            setEventData(evt)
+            if (evt.sub_events.length > 0) {
+                setActiveSubEvent(evt.sub_events[0].id)
             }
+
         } catch (err) {
-            setError("Error fetching event data")
+            toast.error('Failed to fetch event data')
             console.error("Error fetching event data:", err)
         } finally {
             setLoading(false)
@@ -296,6 +295,8 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                 profileImagePreview: "",
                 ageCertificate: null,
                 ageCertificatePreview: "",
+                exhibitor: ""
+
             },
         ])
     }
@@ -384,10 +385,10 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
         if (!files || files.length === 0) return
 
         const file = files[0]
-        if (!file.type.startsWith("image/") && !file.type.includes("pdf")) {
+        if (!file.type.startsWith("image/")) {
             setValidationErrors((prev) => ({
                 ...prev,
-                [id]: { ...(prev[id] || {}), ageCertificate: "Please upload an image or PDF file" },
+                [id]: { ...(prev[id] || {}), ageCertificate: "Please upload an image file" },
             }))
             return
         }
@@ -633,6 +634,19 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
             if (Object.keys(teamErr).length > 0) {
                 errors.team = teamErr
             }
+        } else if (registrationType === "paired") {
+            const pairedErr: { name?: string; categories?: string } = {}
+            if (!pairName.trim()) {
+                pairedErr.name = "Pair name is required"
+                hasErrors = true
+            }
+            if (riders.length !== 2) {
+                pairedErr.categories = "Paired registration requires exactly 2 riders"
+                hasErrors = true
+            }
+            if (Object.keys(pairedErr).length > 0) {
+                errors.team = pairedErr
+            }
         }
 
         // Individual and Paired validation
@@ -733,6 +747,7 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
             const formData = new FormData()
             formData.append("registrationType", registrationType)
             formData.append("teamName", registrationType === "team" ? teamName : "")
+            formData.append("pairName", registrationType === "paired" ? pairName : "")
             formData.append("parentName", parentName)
             formData.append("coachName", coachName)
             formData.append("totalFee", calculateTotal().toString())
@@ -777,6 +792,7 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                 formData.append(`riders[${riderIndex}][phone]`, rider.phone)
                 formData.append(`riders[${riderIndex}][email]`, rider.email)
                 formData.append(`riders[${riderIndex}][password]`, rider.password);
+                formData.append(`riders[${riderIndex}][exhibitor]`, rider.exhibitor);
 
                 // Handle profile image uploads (existing code)
                 const fileFromState = rider.profileImage
@@ -809,7 +825,7 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
 
             console.log("Form data:", Object.fromEntries(formData))
 
-            await axios.post("https://bharat-sports-tamt2.ondigitalocean.app/event-participants/register/4", formData, {
+            await axios.post("http://localhost:5000/event-participants/register/4", formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -834,12 +850,14 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                     profileImagePreview: "",
                     ageCertificate: null,
                     ageCertificatePreview: "",
+                    exhibitor: ""
+
                 },
             ])
             setTeamName("")
         } catch (err: any) {
             console.error("Registration error:", err)
-            setError(err?.response?.data?.message || "Registration failed. Please try again.")
+            toast.error(err.response.data.message);
         } finally {
             setSubmitting(false)
         }
@@ -866,6 +884,8 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                     profileImagePreview: "",
                     ageCertificate: null,
                     ageCertificatePreview: "",
+                    exhibitor: ""
+
                 },
             ])
             setTeamName("")
@@ -888,6 +908,8 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                     profileImagePreview: "",
                     ageCertificate: null,
                     ageCertificatePreview: "",
+                    exhibitor: ""
+
                 },
                 {
                     id: "2",
@@ -906,6 +928,8 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                     profileImagePreview: "",
                     ageCertificate: null,
                     ageCertificatePreview: "",
+                    exhibitor: ""
+
                 },
             ])
             setTeamName("")
@@ -928,6 +952,8 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                     profileImagePreview: "",
                     ageCertificate: null,
                     ageCertificatePreview: "",
+                    exhibitor: ""
+
                 },
                 {
                     id: "2",
@@ -946,6 +972,7 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                     profileImagePreview: "",
                     ageCertificate: null,
                     ageCertificatePreview: "",
+                    exhibitor: ""
                 },
             ])
         }
@@ -967,19 +994,6 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
         )
     }
 
-    if (error) {
-        return (
-            <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
-                <div className="bg-white rounded-2xl p-8 max-w-md text-center">
-                    <h3 className="text-xl font-bold text-red-600 mb-2">Error</h3>
-                    <p className="text-gray-600 mb-4">{error}</p>
-                    <button onClick={onClose} className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700">
-                        Close
-                    </button>
-                </div>
-            </div>
-        )
-    }
 
     if (!eventData) {
         return (
@@ -1108,6 +1122,25 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                                     className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${validationErrors.team?.name ? "border-red-300 bg-red-50" : "border-gray-300"
                                         }`}
                                     placeholder="Enter your team name"
+                                    required
+                                />
+                                {validationErrors.team?.name && (
+                                    <p className="text-red-500 text-xs mt-1">{validationErrors.team.name}</p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Pair Name Field (only for paired registration) */}
+                        {registrationType === "paired" && (
+                            <div className="mb-6">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Pair Name *</label>
+                                <input
+                                    type="text"
+                                    value={pairName}
+                                    onChange={(e) => setPairName(e.target.value)}
+                                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${validationErrors.team?.name ? "border-red-300 bg-red-50" : "border-gray-300"
+                                        }`}
+                                    placeholder="Enter your pair name"
                                     required
                                 />
                                 {validationErrors.team?.name && (
@@ -1294,8 +1327,39 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                                                 <input
                                                     type="date"
                                                     value={rider.dateOfBirth}
-                                                    onChange={(e) => updateRider(rider.id, "dateOfBirth", e.target.value)}
-                                                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${validationErrors[rider.id]?.dateOfBirth ? "border-red-300 bg-red-50" : "border-gray-300"
+                                                    onChange={(e) => {
+                                                        const newDate = e.target.value
+                                                        updateRider(rider.id, "dateOfBirth", newDate) // always update
+
+                                                        if (registrationType === "paired" && riders[0]?.dateOfBirth && rider.id !== riders[0].id) {
+                                                            const firstRiderYear = new Date(riders[0].dateOfBirth).getFullYear()
+                                                            const secondRiderYear = new Date(newDate).getFullYear()
+
+                                                            // check if second rider year is within ±1 year range
+                                                            if (secondRiderYear < firstRiderYear - 1 || secondRiderYear > firstRiderYear + 1) {
+                                                                setValidationErrors((prev) => ({
+                                                                    ...prev,
+                                                                    [rider.id]: {
+                                                                        ...prev[rider.id],
+                                                                        dateOfBirth:
+                                                                            `Second rider must be born between ${firstRiderYear - 1} and ${firstRiderYear + 1}.`,
+                                                                    },
+                                                                }))
+                                                            } else {
+                                                                // clear error if valid
+                                                                setValidationErrors((prev) => ({
+                                                                    ...prev,
+                                                                    [rider.id]: {
+                                                                        ...prev[rider.id],
+                                                                        dateOfBirth: "",
+                                                                    },
+                                                                }))
+                                                            }
+                                                        }
+                                                    }}
+                                                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${validationErrors[rider.id]?.dateOfBirth
+                                                        ? "border-red-300 bg-red-50"
+                                                        : "border-gray-300"
                                                         }`}
                                                 />
                                                 {validationErrors[rider.id]?.dateOfBirth && (
@@ -1384,16 +1448,26 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                                                     <p className="text-red-500 text-xs mt-1">{validationErrors[rider.id].confirmPassword}</p>
                                                 )}
                                             </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Exhibitor</label>
+                                                <input
+                                                    type="text"
+                                                    value={rider.exhibitor}
+                                                    onChange={(e) => updateRider(rider.id, "exhibitor", e.target.value)}
+                                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                                    placeholder="Enter exhibitor name"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 
                                     {/* Age Certificate Upload */}
                                     <div className="md:col-span-3">
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Age Certificate <span className="text-red-500">*</span>
+                                            Age Verification Document <span className="text-red-500">*</span>
                                         </label>
                                         <p className="text-xs text-gray-500 mb-3">
-                                            Please upload a valid government-issued ID (e.g., Aadhaar Card, PAN Card, Passport, etc.). Supported file formats: JPG, JPEG, PNG, PDF. Maximum file size: 1 MB
+                                            Please upload a valid government-issued ID (e.g., Aadhaar Card, PAN Card, Passport, etc.). Supported file formats: JPG, JPEG, and PNG Maximum file size: 1 MB
                                         </p>
                                         <div className="flex items-center space-x-3">
                                             <button
@@ -1749,7 +1823,7 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                     </form>
                 </motion.div>
             </motion.div>
-        </AnimatePresence >
+        </AnimatePresence>
     )
 }
 
