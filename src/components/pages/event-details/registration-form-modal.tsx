@@ -192,7 +192,7 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
         try {
             setLoading(true)
             // NOTE: Using event id directly as in the snippet (4). You can switch to eventId param if your API supports it.
-            const response = await axios.get<ApiResponse>(`http://localhost:5000/event-participants/register/4`)
+            const response = await axios.get<ApiResponse>(`https://bharat-sports-tamt2.ondigitalocean.app/event-participants/register/4`)
             const evt = response.data.data.event
             setEventData(evt)
             if (evt.sub_events.length > 0) {
@@ -825,7 +825,7 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
 
             console.log("Form data:", Object.fromEntries(formData))
 
-            await axios.post("http://localhost:5000/event-participants/register/4", formData, {
+            await axios.post("https://bharat-sports-tamt2.ondigitalocean.app/event-participants/register/4", formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
