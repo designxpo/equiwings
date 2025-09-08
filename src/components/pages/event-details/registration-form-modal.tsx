@@ -1327,39 +1327,8 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                                                 <input
                                                     type="date"
                                                     value={rider.dateOfBirth}
-                                                    onChange={(e) => {
-                                                        const newDate = e.target.value
-                                                        updateRider(rider.id, "dateOfBirth", newDate) // always update
-
-                                                        if (registrationType === "paired" && riders[0]?.dateOfBirth && rider.id !== riders[0].id) {
-                                                            const firstRiderYear = new Date(riders[0].dateOfBirth).getFullYear()
-                                                            const secondRiderYear = new Date(newDate).getFullYear()
-
-                                                            // check if second rider year is within ±1 year range
-                                                            if (secondRiderYear < firstRiderYear - 1 || secondRiderYear > firstRiderYear + 1) {
-                                                                setValidationErrors((prev) => ({
-                                                                    ...prev,
-                                                                    [rider.id]: {
-                                                                        ...prev[rider.id],
-                                                                        dateOfBirth:
-                                                                            `Second rider must be born between ${firstRiderYear - 1} and ${firstRiderYear + 1}.`,
-                                                                    },
-                                                                }))
-                                                            } else {
-                                                                // clear error if valid
-                                                                setValidationErrors((prev) => ({
-                                                                    ...prev,
-                                                                    [rider.id]: {
-                                                                        ...prev[rider.id],
-                                                                        dateOfBirth: "",
-                                                                    },
-                                                                }))
-                                                            }
-                                                        }
-                                                    }}
-                                                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${validationErrors[rider.id]?.dateOfBirth
-                                                        ? "border-red-300 bg-red-50"
-                                                        : "border-gray-300"
+                                                    onChange={(e) => updateRider(rider.id, "dateOfBirth", e.target.value)}
+                                                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent ${validationErrors[rider.id]?.dateOfBirth ? "border-red-300 bg-red-50" : "border-gray-300"
                                                         }`}
                                                 />
                                                 {validationErrors[rider.id]?.dateOfBirth && (
@@ -1449,13 +1418,13 @@ const RegistrationFormModal: React.FC<RegistrationFormProps> = ({ isOpen, onClos
                                                 )}
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Exhibitor</label>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Club/School</label>
                                                 <input
                                                     type="text"
                                                     value={rider.exhibitor}
                                                     onChange={(e) => updateRider(rider.id, "exhibitor", e.target.value)}
                                                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                                                    placeholder="Enter exhibitor name"
+                                                    placeholder="Enter club/school name"
                                                 />
                                             </div>
                                         </div>
