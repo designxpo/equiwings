@@ -1,7 +1,7 @@
 "use client";
 import type React from "react"
 import Link from "next/link"
-import { LuMail, LuPhone, LuFacebook, LuShoppingBag } from "react-icons/lu"
+import { LuMail, LuPhone, LuFacebook, LuShoppingBag, LuInstagram } from "react-icons/lu"
 import { usePathname } from "next/navigation"
 import Image from "next/image";
 import toast from "react-hot-toast";
@@ -149,7 +149,8 @@ const Footer: React.FC = () => {
                                     Follow Us
                                     <div className={`absolute -bottom-2 left-0 md:left-0 w-16 h-1 bg-gradient-to-r ${isBg ? "from-white to-[#ffffff00]" : "from-[#350D3C] to-[#ffffff00]"} rounded-full mx-auto md:mx-0`}></div>
                                 </h2>
-                                <div className="flex justify-center md:justify-start">
+                                <div className="flex justify-center md:justify-start gap-4">
+                                    {/* Facebook */}
                                     <Link
                                         href="https://www.facebook.com/people/Equiwings/100064379361698/"
                                         target="_blank"
@@ -157,24 +158,57 @@ const Footer: React.FC = () => {
                                         className="group relative"
                                         aria-label="Facebook"
                                     >
-                                        <div className={`relative p-3 rounded-xl shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1 ${isBg
-                                            ? "bg-white/10 backdrop-blur-sm border border-white/20 text-white group-hover:bg-white group-hover:text-[#350D3C]"
-                                            : "bg-white border border-[#350D3C] text-[#350D3C] group-hover:bg-[#350D3C] group-hover:text-white"
-                                            }`}>
+                                        <div
+                                            className={`relative p-3 rounded-xl shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1 ${isBg
+                                                    ? "bg-white/10 backdrop-blur-sm border border-white/20 text-white group-hover:bg-white group-hover:text-[#350D3C]"
+                                                    : "bg-white border border-[#350D3C] text-[#350D3C] group-hover:bg-[#350D3C] group-hover:text-white"
+                                                }`}
+                                        >
                                             <div className="transition-colors duration-300 relative z-10">
                                                 <LuFacebook size={28} />
                                             </div>
                                         </div>
                                         {/* Tooltip */}
-                                        <div className={`absolute -top-12 left-1/2 transform -translate-x-1/2 px-3 py-1 rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap ${isBg
-                                            ? "bg-white text-[#350D3C]"
-                                            : "bg-[#350D3C] text-white"
-                                            }`}>
+                                        <div
+                                            className={`absolute -top-12 left-1/2 transform -translate-x-1/2 px-3 py-1 rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap ${isBg ? "bg-white text-[#350D3C]" : "bg-[#350D3C] text-white"
+                                                }`}
+                                        >
                                             Facebook
-                                            <div className={`absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent ${isBg
-                                                ? "border-t-white"
-                                                : "border-t-[#350D3C]"
-                                                }`}></div>
+                                            <div
+                                                className={`absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent ${isBg ? "border-t-white" : "border-t-[#350D3C]"
+                                                    }`}
+                                            ></div>
+                                        </div>
+                                    </Link>
+
+                                    {/* Instagram */}
+                                    <Link
+                                        href="https://www.instagram.com/equiwings_official?igsh=c2o3dGR2bW1ieHFt"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="group relative"
+                                        aria-label="Instagram"
+                                    >
+                                        <div
+                                            className={`relative p-3 rounded-xl shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1 ${isBg
+                                                    ? "bg-white/10 backdrop-blur-sm border border-white/20 text-white group-hover:bg-white group-hover:text-[#350D3C]"
+                                                    : "bg-white border border-[#350D3C] text-[#350D3C] group-hover:bg-[#350D3C] group-hover:text-white"
+                                                }`}
+                                        >
+                                            <div className="transition-colors duration-300 relative z-10">
+                                                <LuInstagram size={28} />
+                                            </div>
+                                        </div>
+                                        {/* Tooltip */}
+                                        <div
+                                            className={`absolute -top-12 left-1/2 transform -translate-x-1/2 px-3 py-1 rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap ${isBg ? "bg-white text-[#350D3C]" : "bg-[#350D3C] text-white"
+                                                }`}
+                                        >
+                                            Instagram
+                                            <div
+                                                className={`absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent ${isBg ? "border-t-white" : "border-t-[#350D3C]"
+                                                    }`}
+                                            ></div>
                                         </div>
                                     </Link>
                                 </div>

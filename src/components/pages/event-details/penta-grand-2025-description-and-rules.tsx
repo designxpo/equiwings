@@ -467,7 +467,7 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
                                     <FaClipboardList className="text-cardinal-pink-800 mt-1 mr-3" />
                                     <div>
                                         <p className="font-semibold">Entries Close</p>
-                                        <p className="text-gray-700">08 October 2025</p>
+                                        <p className="text-gray-700">07 October 2025</p>
                                     </div>
                                 </div>
                             </div>
@@ -515,7 +515,7 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
                         <div>
                             <h3 className="text-xl font-bold text-cardinal-pink-800 mb-4">Entry Fees</h3>
                             <div className="bg-cardinal-pink-50 p-4 rounded-lg mb-4">
-                                <h4 className="font-bold text-cardinal-pink-800 mb-2">Regular Entries (Until 08 Oct 2025)</h4>
+                                <h4 className="font-bold text-cardinal-pink-800 mb-2">Regular Entries (Until 07 Oct 2025)</h4>
                                 <ul className="space-y-2">
                                     <li className="flex justify-between">
                                         <span>Team Events:</span>
@@ -528,7 +528,7 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
                                 </ul>
                             </div>
                             <div className="bg-yellow-50 p-4 rounded-lg">
-                                <h4 className="font-bold text-cardinal-pink-800 mb-2">Post Entries (After 08 Oct 2025)</h4>
+                                <h4 className="font-bold text-cardinal-pink-800 mb-2">Post Entries (After 07 Oct 2025)</h4>
                                 <ul className="space-y-2">
                                     <li className="flex justify-between">
                                         <span>Team Events:</span>
@@ -679,19 +679,19 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
                             <ul className="space-y-3 text-gray-700">
                                 <li className="flex items-start">
                                     <span className="text-cardinal-pink-600 font-bold mr-2">•</span>
-                                    <span>Stable charges: ₹500/- per day per horse</span>
+                                    <span>Stable charges: ₹500/- per horse</span>
                                 </li>
                                 <li className="flex items-start">
                                     <span className="text-cardinal-pink-600 font-bold mr-2">•</span>
-                                    <span>Camping charges: ₹500/- per day per tent</span>
+                                    <span>Camping charges: ₹500/- per tent</span>
                                 </li>
                                 <li className="flex items-start">
                                     <span className="text-cardinal-pink-600 font-bold mr-2">•</span>
-                                    <span>Electricity charges: ₹1000/- per day per connection</span>
+                                    <span>Electricity charges: ₹1000/- per connection</span>
                                 </li>
                                 <li className="flex items-start">
                                     <span className="text-cardinal-pink-600 font-bold mr-2">•</span>
-                                    <span>Water charges: ₹500/- per day per connection</span>
+                                    <span>Water charges: ₹500/- per connection</span>
                                 </li>
                                 <li className="flex items-start">
                                     <span className="text-cardinal-pink-600 font-bold mr-2">•</span>
