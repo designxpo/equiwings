@@ -1,28 +1,28 @@
 "use client"
 import React, { useState, useEffect } from 'react';
 import { Easing, motion, Variants } from 'framer-motion';
-import { 
-  FaMapMarkerAlt, 
-  FaUsers, 
-  FaTrophy, 
-  FaMoneyBillWave, 
-  FaHorse,
-  FaClipboardList,
-  FaCalendarAlt,
-  FaHotel,
-  FaUtensils,
-  FaShieldAlt,
-  FaFileMedical,
-  FaIdCard,
-  FaExclamationTriangle
+import {
+    FaMapMarkerAlt,
+    FaUsers,
+    FaTrophy,
+    FaMoneyBillWave,
+    FaHorse,
+    FaClipboardList,
+    FaCalendarAlt,
+    FaHotel,
+    FaUtensils,
+    FaShieldAlt,
+    FaFileMedical,
+    FaIdCard,
+    FaExclamationTriangle
 } from 'react-icons/fa';
-import { 
-  MdOutlineCalendarToday, 
-  MdDescription, 
-  MdPayment,
-  MdOutlineSchedule,
-  MdOutlineRule,
-//   MdCamping
+import {
+    MdOutlineCalendarToday,
+    MdDescription,
+    MdPayment,
+    MdOutlineSchedule,
+    MdOutlineRule,
+    //   MdCamping
 } from 'react-icons/md';
 import { GiHorseHead } from 'react-icons/gi';
 import axiosInstance from "@/lib/config/axios";
@@ -59,11 +59,11 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showRegistrationForm, setShowRegistrationForm] = useState(false);
-    const [activeDay, setActiveDay] = useState<string>('09 October 2025');
+    const [activeDay, setActiveDay] = useState<string>('30 October 2025');
 
     // Schedule data extracted from the prospectus
     const scheduleData = {
-        '09 October 2025': [
+        '30 October 2025': [
             '07:00 AM: National Qualifier 1 (TP) Day 1 GHRC (P)',
             '11:00 AM: PRIZE DISTRIBUTION',
             '02:00 PM: Open Bareback Pole Bending Race',
@@ -73,17 +73,17 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
             '04:00 PM: Junior & Young Rider Jumping Topscore (50 cm)',
             '05:00 PM: PRIZE DISTRIBUTION'
         ],
-        '10 October 2025': [
+        '31 October 2025': [
             '07:00 AM: National Qualifier 1 (TP) Day 2 GHRC (P)',
             '11:00 AM: PRIZE DISTRIBUTION',
             '02:00 PM: Open Jumping Fault & Out (80 cm)',
             '02:30 PM: Jumping Children Gp 1 (30 cm)',
             '03:00 PM: Jumping Children Gp 2 (30 cm)',
-            '03:30 PM: Junior & Young Rider Jumping (50 cm)',
+            '03:30 PM: Junior, Cadet & Young Rider Jumping (50 cm)',
             '04:00 PM: Cross Jumps Children Gp 1,2,3',
             '05:00 PM: PRIZE DISTRIBUTION'
         ],
-        '11 October 2025': [
+        '01 November 2025': [
             '07:00 AM: Children Hacks Gp 1',
             '07:15 AM: Children Hacks Gp 2',
             '07:30 AM: Children Pole Bending Race Gp 1',
@@ -105,7 +105,7 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
             '04:30 PM: Music & Mug Race Children Gp 2',
             '05:00 PM: PRIZE DISTRIBUTION'
         ],
-        '12 October 2025': [
+        '02 November 2025': [
             '07:00 AM: Children Hacks Gp 3, 4, 5, 6,7',
             '08:00 AM: Children Lime & Spoon Race Gp 3,4,5,6,7',
             '09:00 AM: Children Sack Race Gp 3,4,5,6,7',
@@ -121,36 +121,39 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
             '04:00 PM: Baton Race (Pairs) Children Gp 1&2',
             '05:00 PM: PRIZE DISTRIBUTION'
         ],
-        '13 October 2025': [
-            '07:00 AM: Junior & Young Rider Hacks',
-            '08:00 AM: Junior, Young Rider & Senior Pole Bending Race',
-            '09:00 AM: Junior, Young Rider, Senior Ball & Bucket Race',
-            '09:30 AM: Junior, Young Rider Stick & Ball Race',
-            '10:00 AM: Junior, Young Rider & Senior Whip & Rings Race',
-            '11:00 AM: Junior, Young Rider & Senior Lime & Spoon Race',
-            '11:30 AM: Junior & Young Riders Sack Race',
+        '03 November 2025': [
+            '07:00 AM: Junior, Cadet & Young Rider Hacks',
+            '08:00 AM: Junior, Cadet, Young Rider & Senior Pole Bending Race',
+            '09:00 AM: Junior, Cadet, Young Rider, Senior Ball & Bucket Race',
+            '09:30 AM: Junior, Cadet, Young Rider Stick & Ball Race',
+            '10:00 AM: Junior, Cadet, Young Rider & Senior Whip & Rings Race',
+            '11:00 AM: Junior, Cadet, Young Rider & Senior Lime & Spoon Race',
+            '11:30 AM: Junior, Cadet & Young Riders Sack Race',
             '11:50 AM: PRIZE DISTRIBUTION',
             '12:01 PM - 02:00 PM: LUNCH BREAK',
-            '02:00 PM: Junior & Young Rider Balloon Bursting Race',
-            '02:30 PM: Junior & Young Rider Boot & Hay Race',
+            '02:00 PM: Junior, Cadet & Young Rider Balloon Bursting Race',
+            '02:30 PM: Junior, Cadet & Young Rider Boot & Hay Race',
             '03:00 PM: Children Boot & Hay Race Gp 3,4,5,6,7',
             '04:00 PM: Children Boot & Hay Race Gp 1 & 2',
             '05:00 PM: PRIZE DISTRIBUTION'
         ],
-        '14 October 2025': [
+        '04 November 2025': [
+            '08:00 AM onwards: Jumping Events (60 cm, 70 cm, 80 cm, 90 cm)',
+            '02:00 PM: Open Hacks',
+            '02:30 PM: Baton Race (Pairs) Juniors, Cadet & Young Rider',
+            '03:00 PM: Junior, Cadet & Young Rider Trot Tent Pegging',
+            '03:45 PM: Children Trot Tent Pegging Gp 1 & 2',
+            '04:15 PM: Junior, Cadet & Young Rider Music & Mug Race',
+            '05:00 PM: PRIZE DISTRIBUTION'
+        ],
+        '05 November 2025': [
             '07:00 AM: National Qualifier (Tent Pegging) 2 (Day 1) Elite Sports Academy (P)',
             'Individual Tent Pegging Lance - 3 Runs (GHS)',
             'Individual Rings & Peg - 2 Runs (GHS)',
             '11:00 AM: PRIZE DISTRIBUTION',
-            '02:00 PM: Open Hacks',
-            '02:30 PM: Baton Race (Pairs) Juniors & Young Rider',
-            '03:00 PM: Junior & Young Rider Trot Tent Pegging',
-            '03:45 PM: Children Trot Tent Pegging Gp 1 & 2',
-            '04:15 PM: Junior & Young Rider Music & Mug Race',
-            '05:00 PM: PRIZE DISTRIBUTION',
-            '05:30 PM: PRACTISE - INTERNATIONAL TEAMS - Junior International Trot Tent Pegging Championship & Draw of Lots'
+            '03:30 PM: PRACTISE - INTERNATIONAL TEAMS - Junior International Trot Tent Pegging Championship & Draw of Lots'
         ],
-        '15 October 2025': [
+        '06 November 2025': [
             '07:00 AM: National Qualifier 2 (TP) Day 2 (P)',
             'Individual Tent Pegging Sword - 3 Runs (GHS)',
             'Individual Lemons & Peg - 2 Runs (GHS)',
@@ -163,7 +166,7 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
             '04:30 PM: Trot Team Tent Pegging (3 Runs) - Lance',
             '05:01 PM: PRIZE DISTRIBUTION'
         ],
-        '16 October 2025': [
+        '07 November 2025': [
             '09:00 AM: Day 2 Junior International Trot Tent Pegging Championship',
             'Individual Trot Tent Pegging (4 Runs) - Sword',
             'Individual Trot Carrot Cutting Race (2 Runs) - Sword',
@@ -171,24 +174,24 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
             '11:30 AM: PRIZE DISTRIBUTION',
             '12:30 PM: LUNCH',
             '02:30 PM: Children Jumping Fault & Out (30 cm/40 cm) Gp 1 & 2',
-            '03:30 PM: Junior & Young Rider Jumping Fault & Out (50/60 cm)',
+            '03:30 PM: Junior, Cadet & Young Rider Jumping Fault & Out (50/60 cm)',
             '04:00 PM: Cross Jumps - Junior & Young Rider',
             '04:30 PM: PRIZE DISTRIBUTION'
         ],
-        '17 October 2025': [
-            '07:00 AM: National Qualifier 3 (TP) Day 1- Equiwings',
+        '08 November 2025': [
+            '07:00 AM: National Qualifier 3 (TP) Day 1- Equivings',
             '11:00 AM: PRIZE DISTRIBUTION',
             '03:00 PM: EXHIBITION HORSE SHOW (All Riders - National & International)',
             'Show Jumping, Tent Pegging, Trick Riding, Gymkhana',
             '06:00 PM: PRIZE DISTRIBUTION & TROPHY DISTRIBUTION'
         ],
-        '18 October 2025': [
+        '09 November 2025': [
             '07:00 AM: National Qualifier 3 (TP) Day 2',
             '11:00 AM: PRIZE DISTRIBUTION',
             '02:00 PM: Ladies Hacks',
-            '02:30 PM: Trot Carrot Cutting Race Gp1,2, Junior & Young Rider',
-            '03:00 PM: Trot Carrot & Peg Race Gp1,2, Junior & Young Rider',
-            '03:30 PM: Trot Rings & Peg Gp1,2, Junior & Young Rider',
+            '02:30 PM: Trot Carrot Cutting Race Gp1,2, Junior,Cadet & Young Rider',
+            '03:00 PM: Trot Carrot & Peg Race Gp1,2, Junior,Cadet & Young Rider',
+            '03:30 PM: Trot Rings & Peg Gp1,2, Junior,Cadet & Young Rider',
             '04:00 PM: Ladies Pole Bending Race',
             '04:30 PM: Ladies Ball & Bucket Race',
             '05:00 PM: PRIZE DISTRIBUTION'
@@ -254,7 +257,7 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
                             title: 'THE PENTA GRAND Equestrian Championships',
                             description: 'A prestigious equestrian event featuring five championships: GHS Horse Show, NCR Inter School Equestrian Sports Championship, U.P. Equestrian Championship, National Qualifiers, and Junior International Trot Tent Pegging Championship. Open to riders, schools, clubs, and academies from across India with specific regional restrictions for certain categories.',
                             image: '/images/events/penta-grand.jpg',
-                            date: '09 October - 18 October 2025',
+                            date: '30 October – 09 November 2025',
                             location: 'Gurukul Horse Riding Club (GHRC), NH-24, Ghaziabad (NCR)',
                             rules: [
                                 'All entries must be on the proper Entry Form with entry fee',
@@ -394,7 +397,7 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
                     <h1 className="text-3xl md:text-4xl font-bold text-cardinal-pink-800 mb-2">
                         THE PENTA GRAND Equestrian Championships
                     </h1>
-                    <p className="text-gray-600 text-lg mb-4">09 October - 18 October 2025</p>
+                    <p className="text-gray-600 text-lg mb-4">30 October – 09 November 2025</p>
                     <div className="flex flex-wrap justify-center gap-4 mt-6">
                         <div className="flex items-center bg-cardinal-pink-100 px-4 py-2 rounded-full">
                             <FaMapMarkerAlt className="text-cardinal-pink-800 mr-2" />
@@ -453,7 +456,7 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
                                     <MdOutlineCalendarToday className="text-cardinal-pink-800 mt-1 mr-3" />
                                     <div>
                                         <p className="font-semibold">Dates</p>
-                                        <p className="text-gray-700">09 October - 18 October 2025</p>
+                                        <p className="text-gray-700">30 October – 09 November 2025</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start">
@@ -564,7 +567,7 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
                             Event Schedule
                         </h2>
                     </div>
-                    
+
                     <div className="mb-6">
                         <p className="text-gray-700 mb-4">Select a day to view detailed schedule:</p>
                         <div className="flex overflow-x-auto pb-2 gap-2">
@@ -583,12 +586,12 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
                     <div className="bg-gray-50 p-4 rounded-lg">
                         <h3 className="text-xl font-bold text-cardinal-pink-800 mb-4">{activeDay}</h3>
                         <ul className="space-y-2">
-                            {scheduleData[activeDay as keyof typeof scheduleData].map((event, index) => (
+                            {scheduleData[activeDay as keyof typeof scheduleData]?.map((event, index) => (
                                 <li key={index} className="flex items-start py-2 border-b border-gray-200 last:border-b-0">
                                     <span className="text-cardinal-pink-600 font-bold mr-3 mt-1">•</span>
                                     <span className="text-gray-700">{event}</span>
                                 </li>
-                            ))}
+                            )) || <li className="text-gray-500">No events scheduled for this day</li>}
                         </ul>
                     </div>
 
