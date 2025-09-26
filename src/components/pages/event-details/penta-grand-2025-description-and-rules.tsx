@@ -470,7 +470,7 @@ const DescriptionAndRules: React.FC<DescriptionAndRulesProps> = ({ slug }) => {
                                     <FaClipboardList className="text-cardinal-pink-800 mt-1 mr-3" />
                                     <div>
                                         <p className="font-semibold">Entries Close</p>
-                                        <p className="text-gray-700">07 October 2025</p>
+                                        <p className="text-gray-700">27 October 2025</p>
                                     </div>
                                 </div>
                             </div>
