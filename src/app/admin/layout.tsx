@@ -7,7 +7,7 @@ import { Toaster } from "react-hot-toast";
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode; }>) {
   return (
     <html lang="en">
-      <body className="font-poppins">
+      <body className="font-poppins" suppressHydrationWarning>
         <AdminAuthProvider>
           <InnerLayout>{children}</InnerLayout>
           <Toaster position="top-center" reverseOrder={false} />
