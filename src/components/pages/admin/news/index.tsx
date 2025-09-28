@@ -10,15 +10,18 @@ import { useState, useEffect, useRef } from "react"
 import EditNewsOffcanvas from "./edit-news-offcanvas"
 import NewsViewOffcanvas from "./news-view-offcanvas"
 import CreateNewsOffcanvas from "./create-news-offcanvas"
-import { FiPlus, FiSearch, FiEye, FiEdit, FiTrash2, FiMoreHorizontal, FiFileText } from "react-icons/fi"
+import { FiPlus, FiSearch, FiEye, FiEdit, FiTrash2, FiMoreHorizontal, FiFileText, FiVideo } from "react-icons/fi"
 
 // data type
 type News = {
     _id: string
     title: string
     description: string
-    image: string
-    readMoreButton: string
+    newsDate: string
+    newsType: 'primary' | 'secondary'
+    image?: string
+    video?: string
+    readMoreButton?: string
     isActive: boolean
     slug: string
     createdAt: string
@@ -91,12 +94,37 @@ const DropdownItem = ({
     )
 }
 
+const NewsTypeIcon = ({ newsType }: { newsType: 'primary' | 'secondary' }) => {
+    if (newsType === 'secondary') {
+        return <FiVideo className="h-4 w-4 text-purple-600" />
+    }
+    return <FiFileText className="h-4 w-4 text-blue-600" />
+}
+
+const NewsTypeBadge = ({ newsType }: { newsType: 'primary' | 'secondary' }) => {
+    if (newsType === 'secondary') {
+        return (
+            <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 border border-purple-200">
+                <FiVideo className="mr-1 h-3 w-3" />
+                Secondary
+            </span>
+        )
+    }
+    return (
+        <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+            <FiFileText className="mr-1 h-3 w-3" />
+            Primary
+        </span>
+    )
+}
+
 export default function NewsList() {
     const [news, setNews] = useState<News[]>([])
     const [searchTerm, setSearchTerm] = useState("")
     const [currentPage, setCurrentPage] = useState(1)
     const [tableLoading, setTableLoading] = useState(false)
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+    const [newsTypeFilter, setNewsTypeFilter] = useState<string>("")
     const [pagination, setPagination] = useState({
         page: 1,
         limit: 10,
@@ -132,7 +160,7 @@ export default function NewsList() {
 
     useEffect(() => {
         loadNews()
-    }, [currentPage, searchTerm])
+    }, [currentPage, searchTerm, newsTypeFilter])
 
     const loadNews = async () => {
         try {
@@ -141,13 +169,15 @@ export default function NewsList() {
                 page: currentPage.toString(),
                 limit: "10",
                 ...(searchTerm && { search: searchTerm }),
+                ...(newsTypeFilter && { newsType: newsTypeFilter }),
             })
             const res = await axiosInstance.get(`/admin/news?${params}`)
             const data: ApiResponse = res.data
             setNews(data.news)
             setPagination(data.pagination)
-        } catch (error) {
-            console.log("Failed to load news:", error)
+        } catch (error: any) {
+            console.error("Failed to load news:", error)
+            toast.error(error.response?.data?.error || "Failed to load news")
         } finally {
             setTableLoading(false)
         }
@@ -195,12 +225,13 @@ export default function NewsList() {
         if (!deleteModal.news) return
         try {
             setDeleteModal((prev) => ({ ...prev, loading: true }))
-            await axiosInstance.delete(`/admin/news/${deleteModal.news._id}`)
-            toast.success("News deleted successfully")
+            const response = await axiosInstance.delete(`/admin/news/${deleteModal.news._id}`)
+            toast.success(response.data.message || "News deleted successfully")
             setDeleteModal({ isOpen: false, news: null, loading: false })
             loadNews()
         } catch (error: any) {
-            toast.error(error.response.data.error || "Failed to delete news")
+            toast.error(error.response?.data?.error || "Failed to delete news")
+            setDeleteModal((prev) => ({ ...prev, loading: false }))
         }
     }
 
@@ -236,6 +267,30 @@ export default function NewsList() {
         })
     }
 
+    const renderNewsImage = (article: News) => {
+        if (article.image && article.image !== "dummy link") {
+            return (
+                <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
+                    <img
+                        src={article.image || "/placeholder.svg"}
+                        alt={article.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/placeholder.svg";
+                        }}
+                    />
+                </div>
+            )
+        }
+
+        return (
+            <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center">
+                <NewsTypeIcon newsType={article.newsType} />
+            </div>
+        )
+    }
+
     return (
         <div className="bg-gray-50">
             <div className="max-w-7xl mx-auto space-y-6">
@@ -244,9 +299,9 @@ export default function NewsList() {
                     <div className="space-y-1">
                         <div className="flex items-center gap-2">
                             <FiFileText className="h-6 w-6 text-gray-500" />
-                            <h1 className="text-2xl font-bold text-gray-900">News</h1>
+                            <h1 className="text-2xl font-bold text-gray-900">News Management</h1>
                         </div>
-                        <p className="text-gray-600">Manage and organize your news articles</p>
+                        <p className="text-gray-600">Manage your primary and secondary news articles</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <span className="inline-flex px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-full">
@@ -260,16 +315,30 @@ export default function NewsList() {
                     {/* Table Header */}
                     <div className="px-4 sm:px-6 py-4 border-b border-gray-200 bg-gray-50">
                         <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
-                            <form onSubmit={handleSearch} className="relative flex-1 sm:max-w-sm">
-                                <FiSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Search news..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cardinal-pink-900 outline-none focus:border-cardinal-pink-900 transition-colors text-sm sm:text-base"
-                                />
-                            </form>
+                            <div className="flex flex-col sm:flex-row gap-3 flex-1">
+                                <form onSubmit={handleSearch} className="relative flex-1 sm:max-w-sm">
+                                    <FiSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search news..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cardinal-pink-900 outline-none focus:border-cardinal-pink-900 transition-colors text-sm sm:text-base"
+                                    />
+                                </form>
+                                <select
+                                    value={newsTypeFilter}
+                                    onChange={(e) => {
+                                        setNewsTypeFilter(e.target.value)
+                                        setCurrentPage(1)
+                                    }}
+                                    className="px-3 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cardinal-pink-900 outline-none focus:border-cardinal-pink-900 transition-colors text-sm sm:text-base"
+                                >
+                                    <option value="">All Types</option>
+                                    <option value="primary">Primary News</option>
+                                    <option value="secondary">Secondary News</option>
+                                </select>
+                            </div>
                             <button
                                 onClick={() => setIsCreateModalOpen(true)}
                                 className="inline-flex items-center justify-center px-4 py-2.5 sm:py-2 text-sm sm:text-base bg-cardinal-pink-950 text-white font-medium rounded-lg hover:bg-cardinal-pink-900 transition-colors whitespace-nowrap"
@@ -294,6 +363,12 @@ export default function NewsList() {
                                                 Article
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Type
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                News Date
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                 Status
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -309,24 +384,18 @@ export default function NewsList() {
                                             <tr key={article._id} className="hover:bg-gray-50 transition-colors">
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-start space-x-4">
-                                                        <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
-                                                            {article.image && article.image !== "dummy link" ? (
-                                                                <img
-                                                                    src={article.image || "/placeholder.svg"}
-                                                                    alt={article.title}
-                                                                    className="w-full h-full object-cover"
-                                                                />
-                                                            ) : (
-                                                                <div className="w-full h-full flex items-center justify-center">
-                                                                    <FiFileText className="h-6 w-6 text-gray-400" />
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                                        {renderNewsImage(article)}
                                                         <div className="flex-1 min-w-0">
                                                             <div className="text-sm font-medium text-gray-900 truncate">{article.title}</div>
                                                             <div className="text-sm text-gray-500 line-clamp-2">{article.description}</div>
                                                         </div>
                                                     </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <NewsTypeBadge newsType={article.newsType} />
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    {article.newsDate}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <span
@@ -382,25 +451,14 @@ export default function NewsList() {
                                         <div className="flex items-start justify-between">
                                             <div className="space-y-3 flex-1">
                                                 <div className="flex items-start space-x-3">
-                                                    <div className="w-12 h-12 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
-                                                        {article.image && article.image !== "dummy link" ? (
-                                                            <img
-                                                                src={article.image || "/placeholder.svg"}
-                                                                alt={article.title}
-                                                                className="w-full h-full object-cover"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center">
-                                                                <FiFileText className="h-4 w-4 text-gray-400" />
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                    {renderNewsImage(article)}
                                                     <div className="flex-1 min-w-0">
                                                         <div className="font-medium text-gray-900 truncate">{article.title}</div>
                                                         <div className="text-sm text-gray-500 line-clamp-2">{article.description}</div>
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-wrap gap-2">
+                                                    <NewsTypeBadge newsType={article.newsType} />
                                                     <span
                                                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${article.isActive
                                                             ? "bg-green-100 text-green-800 border-green-200"
@@ -409,6 +467,7 @@ export default function NewsList() {
                                                     >
                                                         {article.isActive ? "Active" : "Inactive"}
                                                     </span>
+                                                    <span className="text-xs text-gray-500">{article.newsDate}</span>
                                                     <span className="text-xs text-gray-500">{formatDate(article.createdAt)}</span>
                                                 </div>
                                             </div>
@@ -443,11 +502,11 @@ export default function NewsList() {
                                     <FiFileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                                     <h3 className="text-lg font-medium text-gray-900 mb-1">No news found</h3>
                                     <p className="text-gray-500 mb-4">
-                                        {searchTerm
+                                        {searchTerm || newsTypeFilter
                                             ? "No news match your search criteria."
                                             : "Get started by adding your first news article."}
                                     </p>
-                                    {!searchTerm && (
+                                    {!searchTerm && !newsTypeFilter && (
                                         <button
                                             onClick={() => setIsCreateModalOpen(true)}
                                             className="inline-flex items-center px-4 py-2 text-sm bg-cardinal-pink-950 text-white font-medium rounded-lg hover:bg-cardinal-pink-900 transition-colors"

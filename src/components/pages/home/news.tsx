@@ -1,13 +1,14 @@
 "use client"
 import React, { useState, useEffect } from "react"
 import { Swiper, SwiperSlide } from "swiper/react"
-import { Pagination, Autoplay } from "swiper/modules"
+import { Pagination, Autoplay, Navigation } from "swiper/modules"
 import Image from "next/image"
 import { motion } from "framer-motion"
 
 // Import Swiper styles
 import "swiper/css"
 import "swiper/css/pagination"
+import "swiper/css/navigation"
 import axiosInstance from "@/lib/config/axios"
 
 interface NewsItem {
@@ -17,6 +18,8 @@ interface NewsItem {
   image: string
   readMoreButton: string
   createdAt: string
+  newsDate: string
+  newsType: "primary" | "secondary"
   isActive: boolean
 }
 
@@ -24,9 +27,10 @@ const News: React.FC = () => {
   const [newsData, setNewsData] = useState<NewsItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [modalImage, setModalImage] = useState<NewsItem | null>(null)
 
-  // Default image path
-  const defaultImage = "/assets/images/home/news/1.webp"
+  // Frame image path
+  const frame = "/assets/images/home/news/frame.png"
 
   // Fetch news data from API
   useEffect(() => {
@@ -34,7 +38,11 @@ const News: React.FC = () => {
       try {
         setLoading(true)
         const response = await axiosInstance.get("/customers/news")
-        setNewsData(response.data.news || [])
+        console.log("API Response:", response.data) // Debug log
+
+        // Filter only active news items
+        const activeNews = (response.data.news || []).filter((news: NewsItem) => news.isActive)
+        setNewsData(activeNews)
         setError(null)
       } catch (err: any) {
         console.error("Error fetching news:", err)
@@ -47,6 +55,15 @@ const News: React.FC = () => {
     fetchNews()
   }, [])
 
+  // Separate primary and secondary news based on newsType
+  const primaryNews = newsData.filter(news => news.newsType === "primary")
+  const secondaryNews = newsData.filter(news => news.newsType === "secondary")
+
+  // Debug logs
+  console.log("Total news data:", newsData)
+  console.log("Primary news:", primaryNews)
+  console.log("Secondary news:", secondaryNews)
+
   // Format date function
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -55,6 +72,16 @@ const News: React.FC = () => {
       month: "long",
       year: "numeric"
     }).toUpperCase()
+  }
+
+  // Handle modal open
+  const openModal = (news: NewsItem) => {
+    setModalImage(news)
+  }
+
+  // Handle modal close
+  const closeModal = () => {
+    setModalImage(null)
   }
 
   const containerVariants = {
@@ -133,6 +160,18 @@ const News: React.FC = () => {
       y: 0,
       transition: {
         duration: 0.4,
+      },
+    },
+  }
+
+  const gridItemVariants = {
+    hidden: { opacity: 0, y: 30, scale: 0.9 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        duration: 0.6,
       },
     },
   }
@@ -222,100 +261,296 @@ const News: React.FC = () => {
         News
       </motion.h2>
 
-      {/* Swiper Slider */}
-      <motion.div
-        className="relative"
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6, delay: 0.3 }}
-      >
-        <Swiper
-          modules={[Pagination, Autoplay]}
-          spaceBetween={30}
-          slidesPerView={1}
-          pagination={{
-            clickable: true,
-            bulletClass: "swiper-pagination-bullet",
-            bulletActiveClass: "swiper-pagination-bullet-active",
-          }}
-          autoplay={{
-            delay: 5000,
-            disableOnInteraction: false,
-          }}
-          loop={true}
-          className="news-swiper"
+      {/* Primary News - Swiper Slider */}
+      {primaryNews.length > 0 && (
+        <motion.div
+          className="relative mb-20"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.3 }}
         >
-          {newsData.map((news) => (
-            <SwiperSlide key={news._id}>
-              <motion.div
-                className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16 max-w-6xl mx-auto"
-                variants={slideVariants}
-                initial="hidden"
-                animate="visible"
-              >
-                {/* Image Section */}
-                <motion.div className="w-full lg:w-1/2 flex justify-center" variants={imageVariants}>
-                  <motion.div
-                    className="relative w-full max-w-md aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl"
-                    whileHover={{
-                      boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-                    }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Image
-                      src={news.image}
-                      alt={news.title}
-                      fill
-                      className="object-cover shadow-2xl transition duration-300 ease-in-out hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                      priority
-                    />
-                  </motion.div>
-                </motion.div>
-
-                {/* Content Section */}
-                <motion.div className="w-full lg:w-1/2 text-center lg:text-left" variants={contentVariants}>
-                  <motion.div className="space-y-6" variants={textStaggerVariants}>
-                    <motion.p
-                      className="text-sm sm:text-base font-medium text-gray-600 uppercase"
-                      variants={textItemVariants}
-                    >
-                      {formatDate(news.createdAt)}
-                    </motion.p>
-                    <motion.h2
-                      className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-cardinal-pink-800 leading-tight"
-                      variants={textItemVariants}
-                    >
-                      {news.title}
-                    </motion.h2>
-                    <motion.p
-                      className="text-base sm:text-lg text-gray-900 leading-relaxed max-w-lg mx-auto lg:mx-0"
-                      variants={textItemVariants}
-                    >
-                      {news.description}
-                    </motion.p>
-                    <motion.a
-                      href={news.readMoreButton}
-                      target={news.readMoreButton !== "" ? "_blank" : undefined}
-                      className="inline-block border-2 border-cardinal-pink-900 text-cardinal-pink-900 font-semibold hover:text-white transform mx-auto px-8 py-2.5 rounded-lg transition duration-300 ease-in-out hover:bg-cardinal-pink-900 hover:cursor-pointer"
-                      variants={textItemVariants}
+          <Swiper
+            modules={[Pagination, Autoplay]}
+            spaceBetween={30}
+            slidesPerView={1}
+            pagination={{
+              clickable: true,
+              bulletClass: "swiper-pagination-bullet",
+              bulletActiveClass: "swiper-pagination-bullet-active",
+            }}
+            autoplay={{
+              delay: 5000,
+              disableOnInteraction: false,
+            }}
+            loop={primaryNews.length > 1}
+            className="news-swiper"
+          >
+            {primaryNews.map((news) => (
+              <SwiperSlide key={news._id}>
+                <motion.div
+                  className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16 max-w-6xl mx-auto"
+                  variants={slideVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {/* Image Section */}
+                  <motion.div className="w-full lg:w-1/2 flex justify-center" variants={imageVariants}>
+                    <motion.div
+                      className="relative w-full max-w-md aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl"
                       whileHover={{
-                        scale: 1.08,
-                        boxShadow: "0 10px 25px -5px rgba(53, 13, 60, 0.3)",
+                        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
                       }}
-                      whileTap={{ scale: 0.98 }}
-                      transition={{ duration: 0.2 }}
+                      transition={{ duration: 0.3 }}
                     >
-                      Read More
-                    </motion.a>
+                      <Image
+                        src={news.image}
+                        alt={news.title}
+                        fill
+                        className="object-cover shadow-2xl transition duration-300 ease-in-out hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        priority
+                      />
+                    </motion.div>
+                  </motion.div>
+
+                  {/* Content Section */}
+                  <motion.div className="w-full lg:w-1/2 text-center lg:text-left" variants={contentVariants}>
+                    <motion.div className="space-y-6" variants={textStaggerVariants}>
+                      <motion.p
+                        className="text-sm sm:text-base font-medium text-gray-600 uppercase"
+                        variants={textItemVariants}
+                      >
+                        {formatDate(news.createdAt)}
+                      </motion.p>
+                      <motion.h2
+                        className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-cardinal-pink-800 leading-tight"
+                        variants={textItemVariants}
+                      >
+                        {news.title}
+                      </motion.h2>
+                      <motion.p
+                        className="text-base sm:text-lg text-gray-900 leading-relaxed max-w-lg mx-auto lg:mx-0"
+                        variants={textItemVariants}
+                      >
+                        {news.description}
+                      </motion.p>
+                      <motion.a
+                        href={news.readMoreButton}
+                        target={news.readMoreButton !== "" ? "_blank" : undefined}
+                        className="inline-block border-2 border-cardinal-pink-900 text-cardinal-pink-900 font-semibold hover:text-white transform mx-auto px-8 py-2.5 rounded-lg transition duration-300 ease-in-out hover:bg-cardinal-pink-900 hover:cursor-pointer"
+                        variants={textItemVariants}
+                        whileHover={{
+                          scale: 1.08,
+                          boxShadow: "0 10px 25px -5px rgba(53, 13, 60, 0.3)",
+                        }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        Read More
+                      </motion.a>
+                    </motion.div>
                   </motion.div>
                 </motion.div>
-              </motion.div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
-      </motion.div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </motion.div>
+      )}
+
+      {/* Secondary News - Swiper Slider with 4 items visible, slide 1 at a time */}
+      {secondaryNews.length > 0 && (
+        <motion.div
+          className="max-w-7xl mx-auto p-5 md:-8 lg:-12"
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+        >
+
+          {/* Secondary News Slider */}
+          <div className="relative secondary-news-slider">
+            <Swiper
+              modules={[Autoplay]}
+              spaceBetween={20}
+              slidesPerView={1}
+              slidesPerGroup={1}
+              breakpoints={{
+                640: {
+                  slidesPerView: 2,
+                  spaceBetween: 20,
+                },
+                768: {
+                  slidesPerView: 3,
+                  spaceBetween: 24,
+                },
+                1024: {
+                  slidesPerView: 4,
+                  spaceBetween: 32,
+                },
+              }}
+              autoplay={{
+                delay: 3000,
+                disableOnInteraction: false,
+              }}
+              loop={secondaryNews.length > 4}
+              className="secondary-news-swiper pb-12"
+            >
+              {secondaryNews.map((news, index) => (
+                <SwiperSlide key={news._id}>
+                  <motion.div
+                    className="flex flex-col items-center h-full"
+                    variants={gridItemVariants}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true }}
+                  >
+                    {/* Date on top for even index items */}
+                    {index % 2 === 0 && (
+                      <motion.div
+                        className="mb-4"
+                        variants={textItemVariants}
+                      >
+                        <p className="text-lg md:text-xl font-bold text-[#350D3C] text-center">
+                          {formatDate(news.newsDate)}
+                        </p>
+                      </motion.div>
+                    )}
+
+                    {/* Framed News Image */}
+                    <motion.div
+                      className="relative w-full max-w-xs cursor-pointer p-5"
+                      style={{ aspectRatio: '3/4' }}
+                      whileHover={{
+                        y: -5,
+                        transition: { duration: 0.3 }
+                      }}
+                      onClick={() => openModal(news)}
+                    >
+                      {/* Frame Container */}
+                      <div className="relative w-full h-full">
+                        {/* News Image - positioned behind the frame */}
+                        <div className="absolute inset-0 z-10">
+                          <div className="w-full h-full relative p-6">
+                            <Image
+                              src={news.image}
+                              alt={news.title}
+                              fill
+                              className="object-cover rounded-lg p-3"
+                              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                              onError={(e) => {
+                                console.error('Image failed to load:', news.image);
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Frame Image - positioned on top */}
+                        <div className="relative z-20 w-full h-full">
+                          <Image
+                            src={frame}
+                            alt="News frame"
+                            fill
+                            className="object-contain pointer-events-none"
+                            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                          />
+                        </div>
+                      </div>
+                    </motion.div>
+
+                    {/* Date on bottom for odd index items */}
+                    {index % 2 === 1 && (
+                      <motion.div
+                        className="mt-4"
+                        variants={textItemVariants}
+                      >
+                        <p className="text-lg md:text-xl font-bold text-[#350D3C] text-center">
+                          {formatDate(news.newsDate)}
+                        </p>
+                      </motion.div>
+                    )}
+                  </motion.div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+
+          </div>
+        </motion.div>
+      )}
+
+      {/* Modal for Secondary News Images */}
+      {modalImage && (
+        <motion.div
+          className="fixed inset-0 bg-black/70 bg-opacity-80 flex items-center justify-center z-50 p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={closeModal}
+        >
+          <motion.div
+            className="relative max-w-4xl w-full max-h-[90vh] bg-white rounded-lg overflow-hidden"
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.5, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="bg-[#350D3C] text-white p-4 flex justify-between items-center">
+              <div>
+                <h3 className="text-lg md:text-xl font-semibold">{formatDate(modalImage.newsDate)}</h3>
+              </div>
+              <button
+                onClick={closeModal}
+                className="text-white hover:cursor-pointer hover:text-gray-300 transition-colors p-1"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4">
+              <div className="relative w-full h-[60vh] mb-4">
+                <Image
+                  src={modalImage.image}
+                  alt={modalImage.title}
+                  fill
+                  className="object-contain"
+                  sizes="80vw"
+                />
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Custom CSS for Swiper styling */}
+      <style jsx global>{`
+        .secondary-news-swiper .swiper-slide {
+          height: auto;
+        }
+        
+        .secondary-news-slider {
+          padding: 0 10px;
+        }
+        
+        @media (max-width: 768px) {
+          .secondary-news-slider {
+            padding: 0 30px;
+          }
+        }
+        
+        .news-swiper .swiper-pagination-bullet {
+          background: #350D3C;
+          opacity: 0.3;
+        }
+        
+        .news-swiper .swiper-pagination-bullet-active {
+          opacity: 1;
+        }
+      `}</style>
     </motion.section>
   )
 }

@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import axiosInstance from "@/lib/config/axios"
-import { FiX, FiUpload } from "react-icons/fi"
+import { FiX, FiUpload, FiFileText, FiVideo } from "react-icons/fi"
 import toast from "react-hot-toast"
 
 interface CreateNewsOffcanvasProps {
@@ -15,21 +15,31 @@ interface CreateNewsOffcanvasProps {
 export default function CreateNewsOffcanvas({ isOpen, onClose, onNewsCreated }: CreateNewsOffcanvasProps) {
   const [loading, setLoading] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
+  const [newsType, setNewsType] = useState<'primary' | 'secondary'>('primary')
   const [formData, setFormData] = useState({
     title: "",
     description: "",
+    newsDate: "",
     readMoreButton: "",
     isActive: true,
   })
+
+  // Media fields
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>("")
-  const [errors, setErrors] = useState<Partial<typeof formData & { image: string }>>({})
+  const [videoFile, setVideoFile] = useState<File | null>(null)
+  const [videoPreview, setVideoPreview] = useState<string>("")
+
+  const [errors, setErrors] = useState<any>({})
 
   // Handle smooth transitions
   useEffect(() => {
     if (isOpen) {
       setIsAnimating(true)
       document.body.style.overflow = "hidden"
+      // Set default date to today
+      const today = new Date().toISOString().split('T')[0]
+      setFormData(prev => ({ ...prev, newsDate: today }))
     } else {
       document.body.style.overflow = "unset"
     }
@@ -39,37 +49,71 @@ export default function CreateNewsOffcanvas({ isOpen, onClose, onNewsCreated }: 
   }, [isOpen])
 
   const validateForm = () => {
-    const newErrors: Partial<typeof formData & { image: string }> = {}
+    const newErrors: any = {}
     if (!formData.title.trim()) newErrors.title = "Title is required"
     if (!formData.description.trim()) newErrors.description = "Description is required"
+    if (!formData.newsDate.trim()) newErrors.newsDate = "News date is required"
     return newErrors
+  }
+
+  const validateFile = (file: File, type: 'image' | 'video') => {
+    if (type === 'image') {
+      if (!file.type.startsWith("image/")) {
+        throw new Error("Only image files are allowed")
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error("Image size must be less than 5MB")
+      }
+    } else if (type === 'video') {
+      if (!file.type.startsWith("video/")) {
+        throw new Error("Only video files are allowed")
+      }
+      if (file.size > 50 * 1024 * 1024) {
+        throw new Error("Video size must be less than 50MB")
+      }
+    }
   }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        toast.error("Please select an image file")
-        return
-      }
+      try {
+        validateFile(file, 'image')
+        setImageFile(file)
 
-      // Validate file size (5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image size must be less than 5MB")
-        return
+        // Create preview
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          setImagePreview(e.target?.result as string)
+        }
+        reader.readAsDataURL(file)
+        setErrors((prev: any) => ({ ...prev, image: "" }))
+      } catch (error: any) {
+        toast.error(error.message)
+        e.target.value = '' // Reset input
       }
-
-      setImageFile(file)
-
-      // Create preview
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setImagePreview(e.target?.result as string)
-      }
-      reader.readAsDataURL(file)
     }
-    setErrors((prev) => ({ ...prev, image: "" }))
+  }
+
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      try {
+        validateFile(file, 'video')
+        setVideoFile(file)
+
+        // Create preview
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          setVideoPreview(e.target?.result as string)
+        }
+        reader.readAsDataURL(file)
+        setErrors((prev: any) => ({ ...prev, video: "" }))
+      } catch (error: any) {
+        toast.error(error.message)
+        e.target.value = '' // Reset input
+      }
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,40 +127,61 @@ export default function CreateNewsOffcanvas({ isOpen, onClose, onNewsCreated }: 
     setLoading(true)
     try {
       const submitFormData = new FormData()
-      submitFormData.append("title", formData.title)
-      submitFormData.append("description", formData.description)
-      submitFormData.append("readMoreButton", formData.readMoreButton)
-      submitFormData.append("isActive", formData.isActive.toString())
 
+      // Always include required fields with trimmed values
+      submitFormData.append("title", formData.title.trim())
+      submitFormData.append("description", formData.description.trim())
+      submitFormData.append("newsDate", formData.newsDate.trim())
+      submitFormData.append("newsType", newsType)
+      submitFormData.append("isActive", formData.isActive.toString())
+      submitFormData.append("readMoreButton", formData.readMoreButton.trim())
+
+      // Append media files if present
       if (imageFile) {
         submitFormData.append("image", imageFile)
       }
 
-      await axiosInstance.post("/admin/news", submitFormData, {
+      if (videoFile) {
+        submitFormData.append("video", videoFile)
+      }
+
+      const response = await axiosInstance.post("/admin/news", submitFormData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       })
 
-      toast.success("News created successfully!")
-
-      // Reset form
-      setFormData({
-        title: "",
-        description: "",
-        readMoreButton: "",
-        isActive: true,
-      })
-      setImageFile(null)
-      setImagePreview("")
-      setErrors({})
+      toast.success(response.data.message || "News created successfully!")
+      resetForm()
       onNewsCreated?.()
       handleClose()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || "Failed to create news")
+      const errorMessage = error.response?.data?.error || "Failed to create news"
+      toast.error(errorMessage)
+
+      // Handle specific validation errors
+      if (error.response?.status === 400) {
+        setErrors({ general: errorMessage })
+      }
     } finally {
       setLoading(false)
     }
+  }
+
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      description: "",
+      newsDate: "",
+      readMoreButton: "",
+      isActive: true,
+    })
+    setNewsType('primary')
+    setImageFile(null)
+    setImagePreview("")
+    setVideoFile(null)
+    setVideoPreview("")
+    setErrors({})
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -126,22 +191,20 @@ export default function CreateNewsOffcanvas({ isOpen, onClose, onNewsCreated }: 
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }))
-    setErrors((prev) => ({ ...prev, [name]: "" }))
+    setErrors((prev: any) => ({ ...prev, [name]: "", general: "" }))
+  }
+
+  const handleNewsTypeChange = (newType: 'primary' | 'secondary') => {
+    setNewsType(newType)
+    // Clear errors when switching types
+    setErrors({})
   }
 
   const handleClose = () => {
     if (!loading) {
       setIsAnimating(false)
       setTimeout(() => {
-        setFormData({
-          title: "",
-          description: "",
-          readMoreButton: "",
-          isActive: true,
-        })
-        setImageFile(null)
-        setImagePreview("")
-        setErrors({})
+        resetForm()
         onClose()
       }, 300)
     }
@@ -153,9 +216,8 @@ export default function CreateNewsOffcanvas({ isOpen, onClose, onNewsCreated }: 
     }
   }
 
-  const inputClass = (field: keyof typeof formData) =>
-    `w-full px-3 py-2 border ${
-      errors[field] ? "border-red-500" : "border-gray-300"
+  const inputClass = (field: string) =>
+    `w-full px-3 py-2 border ${errors[field] ? "border-red-500" : "border-gray-300"
     } rounded-lg focus:ring-2 outline-none focus:ring-cardinal-pink-800 focus:border-cardinal-pink-800 transition-colors`
 
   if (!isOpen && !isAnimating) return null
@@ -164,16 +226,14 @@ export default function CreateNewsOffcanvas({ isOpen, onClose, onNewsCreated }: 
     <div className="fixed inset-0 z-50">
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black transition-opacity duration-300 ease-in-out ${
-          isOpen && isAnimating ? "opacity-50" : "opacity-0"
-        }`}
+        className={`fixed inset-0 bg-black transition-opacity duration-300 ease-in-out ${isOpen && isAnimating ? "opacity-50" : "opacity-0"
+          }`}
         onClick={handleBackdropClick}
       />
       {/* Offcanvas Panel */}
       <div
-        className={`fixed top-0 right-0 h-full w-full max-w-2xl bg-white shadow-2xl transform transition-transform duration-300 ease-in-out ${
-          isOpen && isAnimating ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`fixed top-0 right-0 h-full w-full max-w-2xl bg-white shadow-2xl transform transition-transform duration-300 ease-in-out ${isOpen && isAnimating ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
@@ -190,10 +250,65 @@ export default function CreateNewsOffcanvas({ isOpen, onClose, onNewsCreated }: 
               <FiX className="h-5 w-5" />
             </button>
           </div>
+
           {/* Form Content - Scrollable */}
           <div className="flex-1 overflow-y-auto">
             <form onSubmit={handleSubmit} className="p-6">
               <div className="space-y-6">
+                {/* General Error */}
+                {errors.general && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600">{errors.general}</p>
+                  </div>
+                )}
+
+                {/* News Type Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    News Type <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleNewsTypeChange('primary')}
+                      className={`p-4 border-2 rounded-lg transition-all ${newsType === 'primary'
+                          ? 'border-cardinal-pink-800 bg-cardinal-pink-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                    >
+                      <FiFileText className={`h-6 w-6 mx-auto mb-2 ${newsType === 'primary' ? 'text-cardinal-pink-800' : 'text-gray-400'
+                        }`} />
+                      <div className={`font-medium ${newsType === 'primary' ? 'text-cardinal-pink-800' : 'text-gray-700'
+                        }`}>
+                        Primary News
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Main news articles
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleNewsTypeChange('secondary')}
+                      className={`p-4 border-2 rounded-lg transition-all ${newsType === 'secondary'
+                          ? 'border-cardinal-pink-800 bg-cardinal-pink-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                    >
+                      <FiVideo className={`h-6 w-6 mx-auto mb-2 ${newsType === 'secondary' ? 'text-cardinal-pink-800' : 'text-gray-400'
+                        }`} />
+                      <div className={`font-medium ${newsType === 'secondary' ? 'text-cardinal-pink-800' : 'text-gray-700'
+                        }`}>
+                        Secondary News
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Secondary articles
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Common Fields */}
                 <div>
                   <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
                     Title <span className="text-red-500">*</span>
@@ -226,6 +341,37 @@ export default function CreateNewsOffcanvas({ isOpen, onClose, onNewsCreated }: 
                   {errors.description && <p className="text-sm text-red-500 mt-1">{errors.description}</p>}
                 </div>
 
+                <div>
+                  <label htmlFor="newsDate" className="block text-sm font-medium text-gray-700 mb-2">
+                    News Date <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    id="newsDate"
+                    name="newsDate"
+                    value={formData.newsDate}
+                    onChange={handleChange}
+                    className={inputClass("newsDate")}
+                  />
+                  {errors.newsDate && <p className="text-sm text-red-500 mt-1">{errors.newsDate}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="readMoreButton" className="block text-sm font-medium text-gray-700 mb-2">
+                    Read More URL
+                  </label>
+                  <input
+                    type="url"
+                    id="readMoreButton"
+                    name="readMoreButton"
+                    value={formData.readMoreButton}
+                    onChange={handleChange}
+                    className={inputClass("readMoreButton")}
+                    placeholder="Enter read more button URL"
+                  />
+                </div>
+
+                {/* Image Upload */}
                 <div>
                   <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-2">
                     Image
@@ -272,23 +418,56 @@ export default function CreateNewsOffcanvas({ isOpen, onClose, onNewsCreated }: 
                       </div>
                     )}
                   </div>
-                  {errors.image && <p className="text-sm text-red-500 mt-1">{errors.image}</p>}
                 </div>
 
-                <div>
-                  <label htmlFor="readMoreButton" className="block text-sm font-medium text-gray-700 mb-2">
-                    Read More URL
+                {/* Video Upload */}
+                {newsType === "secondary" && <div>
+                  <label htmlFor="video" className="block text-sm font-medium text-gray-700 mb-2">
+                    Video
                   </label>
-                  <input
-                    type="url"
-                    id="readMoreButton"
-                    name="readMoreButton"
-                    value={formData.readMoreButton}
-                    onChange={handleChange}
-                    className={inputClass("readMoreButton")}
-                    placeholder="Enter read more button URL"
-                  />
-                </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-center w-full">
+                      <label
+                        htmlFor="video"
+                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+                      >
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <FiVideo className="w-8 h-8 mb-4 text-gray-500" />
+                          <p className="mb-2 text-sm text-gray-500">
+                            <span className="font-semibold">Click to upload</span> video
+                          </p>
+                          <p className="text-xs text-gray-500">MP4, WebM up to 50MB</p>
+                        </div>
+                        <input
+                          id="video"
+                          type="file"
+                          className="hidden"
+                          accept="video/*"
+                          onChange={handleVideoChange}
+                        />
+                      </label>
+                    </div>
+                    {videoPreview && (
+                      <div className="relative">
+                        <video
+                          src={videoPreview}
+                          className="w-full h-48 object-cover rounded-lg"
+                          controls
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVideoFile(null)
+                            setVideoPreview("")
+                          }}
+                          className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                        >
+                          <FiX className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>}
 
                 <div className="flex items-center">
                   <input
@@ -306,6 +485,7 @@ export default function CreateNewsOffcanvas({ isOpen, onClose, onNewsCreated }: 
               </div>
             </form>
           </div>
+
           {/* Footer - Fixed at bottom */}
           <div className="flex justify-end space-x-4 p-6 border-t border-gray-200 bg-gray-50">
             <button
