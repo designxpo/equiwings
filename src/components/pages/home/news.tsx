@@ -10,6 +10,7 @@ import "swiper/css"
 import "swiper/css/pagination"
 import "swiper/css/navigation"
 import axiosInstance from "@/lib/config/axios"
+import { LuX } from "react-icons/lu"
 
 interface NewsItem {
   _id: string
@@ -67,11 +68,10 @@ const News: React.FC = () => {
   // Format date function
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString("en-US", {
-      day: "numeric",
+    return new Intl.DateTimeFormat("en-US", {
       month: "long",
       year: "numeric"
-    }).toUpperCase()
+    }).format(date).toUpperCase().replace(/ /g, " ")
   }
 
   // Handle modal open
@@ -358,7 +358,7 @@ const News: React.FC = () => {
         </motion.div>
       )}
 
-      {/* Secondary News - Swiper Slider with 4 items visible, slide 1 at a time */}
+      {/* Secondary News - Swiper Slider with A4 size images */}
       {secondaryNews.length > 0 && (
         <motion.div
           className="max-w-7xl mx-auto p-5 md:-8 lg:-12"
@@ -381,10 +381,14 @@ const News: React.FC = () => {
                   spaceBetween: 20,
                 },
                 768: {
-                  slidesPerView: 3,
+                  slidesPerView: 2,
                   spaceBetween: 24,
                 },
                 1024: {
+                  slidesPerView: 3,
+                  spaceBetween: 32,
+                },
+                1280: {
                   slidesPerView: 4,
                   spaceBetween: 32,
                 },
@@ -417,10 +421,10 @@ const News: React.FC = () => {
                       </motion.div>
                     )}
 
-                    {/* Framed News Image */}
+                    {/* Framed News Image - A4 Size */}
                     <motion.div
-                      className="relative w-full max-w-xs cursor-pointer p-5"
-                      style={{ aspectRatio: '3/4' }}
+                      className="relative w-full max-w-sm cursor-pointer p-5"
+                      style={{ aspectRatio: '210/297' }} // A4 aspect ratio
                       whileHover={{
                         y: -5,
                         transition: { duration: 0.3 }
@@ -437,7 +441,7 @@ const News: React.FC = () => {
                               alt={news.title}
                               fill
                               className="object-cover rounded-lg p-3"
-                              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                              sizes="(max-width: 640px) 90vw, (max-width: 768px) 45vw, (max-width: 1024px) 30vw, 22vw"
                               onError={(e) => {
                                 console.error('Image failed to load:', news.image);
                               }}
@@ -452,7 +456,7 @@ const News: React.FC = () => {
                             alt="News frame"
                             fill
                             className="object-contain pointer-events-none"
-                            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                            sizes="(max-width: 640px) 90vw, (max-width: 768px) 45vw, (max-width: 1024px) 30vw, 22vw"
                           />
                         </div>
                       </div>
@@ -478,50 +482,73 @@ const News: React.FC = () => {
         </motion.div>
       )}
 
-      {/* Modal for Secondary News Images */}
+      {/* Modal for Secondary News Images with Frame */}
       {modalImage && (
         <motion.div
-          className="fixed inset-0 bg-black/70 bg-opacity-80 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={closeModal}
         >
           <motion.div
-            className="relative max-w-4xl w-full max-h-[90vh] bg-white rounded-lg overflow-hidden"
-            initial={{ scale: 0.5, opacity: 0 }}
+            className="relative max-w-lg w-full bg-white rounded-lg overflow-hidden shadow-2xl"
+            initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.5, opacity: 0 }}
+            exit={{ scale: 0.8, opacity: 0 }}
             transition={{ duration: 0.3 }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
             <div className="bg-[#350D3C] text-white p-4 flex justify-between items-center">
-              <div>
-                <h3 className="text-lg md:text-xl font-semibold">{formatDate(modalImage.newsDate)}</h3>
-              </div>
+              {/* <h3 className="text-lg font-semibold">{formatDate(modalImage.newsDate)}</h3> */}
+              <div></div>
               <button
                 onClick={closeModal}
-                className="text-white hover:cursor-pointer hover:text-gray-300 transition-colors p-1"
+                className="text-white hover:text-gray-200 transition-colors p-1 hover:bg-white/10 rounded"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <LuX size={24} />
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-4">
-              <div className="relative w-full h-[60vh] mb-4">
-                <Image
-                  src={modalImage.image}
-                  alt={modalImage.title}
-                  fill
-                  className="object-contain"
-                  sizes="80vw"
-                />
+            {/* Optional: News Title at Bottom */}
+            <div className="pt-6 px-4 md:px-8 bg-gray-50">
+              <h4 className="text-[#350D3C] text-lg font-semibold">{formatDate(modalImage.newsDate)}</h4>
+            </div>
+
+            {/* Modal Body with Framed Image */}
+            <div className="px-4 pb-6 pt-2 flex justify-center items-center bg-gray-50">
+              <div className="relative w-full max-w-sm mx-auto" style={{ aspectRatio: '210/297' }}>
+                {/* Frame Container */}
+                <div className="relative w-full h-full">
+                  {/* News Image - positioned behind the frame */}
+                  <div className="absolute inset-0 z-10 p-8">
+                    <div className="w-full h-full relative">
+                      <Image
+                        src={modalImage.image}
+                        alt={modalImage.title}
+                        fill
+                        className="object-cover rounded-sm"
+                        sizes="(max-width: 768px) 90vw, 400px"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Frame Image - positioned on top */}
+                  <div className="relative z-20 w-full h-full">
+                    <Image
+                      src={frame}
+                      alt="News frame"
+                      fill
+                      className="object-contain pointer-events-none"
+                      sizes="(max-width: 768px) 90vw, 400px"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
+
+
           </motion.div>
         </motion.div>
       )}
