@@ -6,7 +6,7 @@ const Announcement = () => {
         <>
             <AnnouncementList />
         </>
-    )
+    ) 
 }
 
 export default Announcement;
