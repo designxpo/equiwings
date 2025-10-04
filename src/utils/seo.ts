@@ -1,7 +1,10 @@
 import Seo from "@/lib/models/Seo"
+import connectDB from "@/lib/db/connection"
 
 export async function getSeoData(type: string) {
     try {
+        await connectDB();
+
         const seo = await Seo.findOne({ type: type.toLowerCase() }).lean()
 
         if (!seo || Array.isArray(seo)) {
