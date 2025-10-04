@@ -14,6 +14,7 @@ const navigation = [
     { name: "Announcements", href: "/admin/announcements", icon: FiLayers },
     { name: "News", href: "/admin/news", icon: FiDisc },
     { name: "Blogs", href: "/admin/blogs", icon: FiFileText },
+    { name: "SEO Management", href: "/admin/seo-manage", icon: FiFileText },
 ]
 
 export function Sidebar() {
