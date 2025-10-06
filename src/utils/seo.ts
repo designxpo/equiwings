@@ -15,7 +15,7 @@ export async function getSeoData(type: string) {
                 keywords:
                     "Equiwings, Equestrian, Horse Riding, Horse Training, Riding Lessons, Horse Care, Equestrian Supplies, Riding Gear, Horse Boarding, Equestrian Events",
             }
-        }
+        } 
 
         return {
             title: seo.metaTitle || "Discover India's Premier Equestrian Experience",
