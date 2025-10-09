@@ -4,17 +4,20 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useSidebar } from "@/context/sidebar-context"
 import { useAdminAuth } from "@/providers/admin-auth-context"
-import { FiHome, FiUsers, FiPackage, FiLogOut, FiX, FiPhone, FiLayers, FiDisc, FiFileText } from "react-icons/fi"
+import { MdDashboard, MdPeople, MdProductionQuantityLimits, MdContactPhone, MdAnnouncement, MdSearch, MdImage } from "react-icons/md"
+import { FaNewspaper, FaBloggerB } from "react-icons/fa"
+import { FiLogOut, FiX } from "react-icons/fi"
 
 const navigation = [
-    { name: "Dashboard", href: "/admin/dashboard", icon: FiHome },
-    { name: "Customers", href: "/admin/users", icon: FiUsers },
-    { name: "Products", href: "/admin/products", icon: FiPackage },
-    { name: "Contacts", href: "/admin/contacts", icon: FiPhone },
-    { name: "Announcements", href: "/admin/announcements", icon: FiLayers },
-    { name: "News", href: "/admin/news", icon: FiDisc },
-    { name: "Blogs", href: "/admin/blogs", icon: FiFileText },
-    { name: "SEO Management", href: "/admin/seo-manage", icon: FiFileText },
+    { name: "Dashboard", href: "/admin/dashboard", icon: MdDashboard },
+    { name: "Customers", href: "/admin/users", icon: MdPeople },
+    { name: "Products", href: "/admin/products", icon: MdProductionQuantityLimits },
+    { name: "Contacts", href: "/admin/contacts", icon: MdContactPhone },
+    { name: "Announcements", href: "/admin/announcements", icon: MdAnnouncement },
+    { name: "News", href: "/admin/news", icon: FaNewspaper },
+    { name: "Blogs", href: "/admin/blogs", icon: FaBloggerB },
+    { name: "SEO Management", href: "/admin/seo-manage", icon: MdSearch },
+    { name: "Sponsor Logos", href: "/admin/logos", icon: MdImage },
 ]
 
 export function Sidebar() {

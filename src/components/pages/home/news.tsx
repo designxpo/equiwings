@@ -67,6 +67,7 @@ const News: React.FC = () => {
 
   // Format date function
   const formatDate = (dateString: string) => {
+    if (!dateString) return ""
     const date = new Date(dateString)
     return new Intl.DateTimeFormat("en-US", {
       month: "long",
@@ -513,7 +514,7 @@ const News: React.FC = () => {
 
             {/* Optional: News Title at Bottom */}
             <div className="pt-6 px-4 md:px-8 bg-gray-50">
-              <h4 className="text-[#350D3C] text-lg font-semibold">{formatDate(modalImage.newsDate)}</h4>
+              <h4 className="text-[#350D3C] text-lg font-semibold">{formatDate(modalImage?.newsDate)}</h4>
             </div>
 
             {/* Modal Body with Framed Image */}
