@@ -4,7 +4,7 @@ import mongoose, { Schema, Document } from 'mongoose'
 export interface INews extends Document {
     title: string
     description: string
-    newsDate: string
+    newsDate?: string
     newsType: 'primary' | 'secondary'
     image?: string
     readMoreButton?: string
@@ -28,7 +28,7 @@ const NewsSchema: Schema = new Schema<INews>({
     },
     newsDate: {
         type: String,
-        required: [true, 'News date is required'],
+        required: false,
         trim: true
     },
     newsType: {

@@ -72,9 +72,9 @@ export async function POST(request: NextRequest) {
     const isActive = isActiveRaw ? isActiveRaw === "true" : true // fallback to schema default
 
     // Validation
-    if (!title || !description || !newsDate || !newsType) {
+    if (!title || !description || !newsType) {
       return NextResponse.json(
-        { error: "Title, description, news date, and news type are required" },
+        { error: "Title, description, and news type are required" },
         { status: 400 },
       )
     }

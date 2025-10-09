@@ -53,8 +53,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const isActive = formData.get("isActive") === "true"
 
     // Validation
-    if (!title || !description || !newsDate) {
-      return NextResponse.json({ error: "Title, description, and news date are required" }, { status: 400 })
+    if (!title || !description) {
+      return NextResponse.json({ error: "Title and description are required" }, { status: 400 })
     }
 
     // Check for duplicate slug if title changed

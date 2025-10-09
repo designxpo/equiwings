@@ -90,7 +90,7 @@ export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news
     const newErrors: any = {}
     if (!formData.title.trim()) newErrors.title = "Title is required"
     if (!formData.description.trim()) newErrors.description = "Description is required"
-    if (!formData.newsDate.trim()) newErrors.newsDate = "News date is required"
+    // if (!formData.newsDate.trim()) newErrors.newsDate = "News date is required"
     return newErrors
   }
 
@@ -353,7 +353,8 @@ export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news
 
                 <div>
                   <label htmlFor="newsDate" className="block text-sm font-medium text-gray-700 mb-2">
-                    News Date <span className="text-red-500">*</span>
+                    News Date 
+                    {/* <span className="text-red-500">*</span> */}
                   </label>
                   <input
                     type="date"
