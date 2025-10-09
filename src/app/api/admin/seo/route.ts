@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         await connectDB()
 
         const body = await request.json()
-        console.log("Request Body:", body) // Debug log
+
         const { type, metaTitle, metaDescription, metaKeywords } = body
 
         if (!type || !metaTitle || !metaDescription || !metaKeywords) {

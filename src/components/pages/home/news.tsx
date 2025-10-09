@@ -39,7 +39,6 @@ const News: React.FC = () => {
       try {
         setLoading(true)
         const response = await axiosInstance.get("/customers/news")
-        console.log("API Response:", response.data) // Debug log
 
         // Filter only active news items
         const activeNews = (response.data.news || []).filter((news: NewsItem) => news.isActive)
@@ -59,11 +58,6 @@ const News: React.FC = () => {
   // Separate primary and secondary news based on newsType
   const primaryNews = newsData.filter(news => news.newsType === "primary")
   const secondaryNews = newsData.filter(news => news.newsType === "secondary")
-
-  // Debug logs
-  console.log("Total news data:", newsData)
-  console.log("Primary news:", primaryNews)
-  console.log("Secondary news:", secondaryNews)
 
   // Format date function
   const formatDate = (dateString: string) => {
