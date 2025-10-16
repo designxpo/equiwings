@@ -16,7 +16,7 @@ const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME!;
 export async function uploadToS3(file: File): Promise<string> {
   const params = {
     Bucket: BUCKET_NAME,
-    Key: `news/${Date.now()}-${file.name}`,
+    Key: `assets/${Date.now()}-${file.name}`,
     Body: file.stream(), // ✅ Stream instead of buffering
     ContentType: file.type,
   };

@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import axiosInstance from "@/lib/config/axios"
 import { FiX, FiUpload, FiFileText, FiVideo } from "react-icons/fi"
 import toast from "react-hot-toast"
+import { uploadToS3 } from "@/lib/utils/s3"
 
 interface CreateNewsOffcanvasProps {
   isOpen: boolean
@@ -138,11 +139,13 @@ export default function CreateNewsOffcanvas({ isOpen, onClose, onNewsCreated }: 
 
       // Append media files if present
       if (imageFile) {
-        submitFormData.append("image", imageFile)
+        const imageurl = await uploadToS3(imageFile)
+        submitFormData.append("image", imageurl)
       }
 
       if (videoFile) {
-        submitFormData.append("video", videoFile)
+        const videourl = await uploadToS3(videoFile)
+        submitFormData.append("video", videourl)
       }
 
       const response = await axiosInstance.post("/admin/news", submitFormData, {
@@ -272,8 +275,8 @@ export default function CreateNewsOffcanvas({ isOpen, onClose, onNewsCreated }: 
                       type="button"
                       onClick={() => handleNewsTypeChange('primary')}
                       className={`p-4 border-2 rounded-lg transition-all ${newsType === 'primary'
-                          ? 'border-cardinal-pink-800 bg-cardinal-pink-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-cardinal-pink-800 bg-cardinal-pink-50'
+                        : 'border-gray-200 hover:border-gray-300'
                         }`}
                     >
                       <FiFileText className={`h-6 w-6 mx-auto mb-2 ${newsType === 'primary' ? 'text-cardinal-pink-800' : 'text-gray-400'
@@ -291,8 +294,8 @@ export default function CreateNewsOffcanvas({ isOpen, onClose, onNewsCreated }: 
                       type="button"
                       onClick={() => handleNewsTypeChange('secondary')}
                       className={`p-4 border-2 rounded-lg transition-all ${newsType === 'secondary'
-                          ? 'border-cardinal-pink-800 bg-cardinal-pink-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-cardinal-pink-800 bg-cardinal-pink-50'
+                        : 'border-gray-200 hover:border-gray-300'
                         }`}
                     >
                       <FiVideo className={`h-6 w-6 mx-auto mb-2 ${newsType === 'secondary' ? 'text-cardinal-pink-800' : 'text-gray-400'
@@ -343,7 +346,7 @@ export default function CreateNewsOffcanvas({ isOpen, onClose, onNewsCreated }: 
 
                 <div>
                   <label htmlFor="newsDate" className="block text-sm font-medium text-gray-700 mb-2">
-                    News Date 
+                    News Date
                     {/* <span className="text-red-500">*</span> */}
                   </label>
                   <input
