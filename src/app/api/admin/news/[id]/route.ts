@@ -33,40 +33,53 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 // Update news by ID
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const user = await authenticate(request)
-    await connectDB()
+    const user = await authenticate(request);
+    await connectDB();
 
-    const { id } = await params
-    const existingNews = await News.findById(id)
+    const { id } = await params;
+    const existingNews = await News.findById(id);
 
     if (!existingNews) {
-      return NextResponse.json({ error: "News not found" }, { status: 404 })
+      return NextResponse.json({ error: "News not found" }, { status: 404 });
     }
 
-    const formData = await request.formData()
-    const title = formData.get("title") as string
-    const description = formData.get("description") as string
-    const newsDate = formData.get("newsDate") as string
-    const readMoreButton = formData.get("readMoreButton") as string
-    const isActive = formData.get("isActive") === "true"
+    const formData = await request.formData();
+    const title = formData.get("title") as string;
+    const description = formData.get("description") as string;
+    const newsDate = formData.get("newsDate") as string;
+    const readMoreButton = formData.get("readMoreButton") as string;
+    const isActive = formData.get("isActive") === "true";
 
     // Validation
     if (!title || !description) {
-      return NextResponse.json({ error: "Title and description are required" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Title and description are required" },
+        { status: 400 }
+      );
     }
 
     // Check for duplicate slug if title changed
     if (title !== existingNews.title) {
       const newSlug = title
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
 
-      const duplicateNews = await News.findOne({ slug: newSlug, _id: { $ne: id } })
+      const duplicateNews = await News.findOne({
+        slug: newSlug,
+        _id: { $ne: id },
+      });
+
       if (duplicateNews) {
-        return NextResponse.json({ error: "News with this title already exists" }, { status: 400 })
+        return NextResponse.json(
+          { error: "News with this title already exists" },
+          { status: 400 }
+        );
       }
     }
 
@@ -76,111 +89,103 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       newsDate,
       readMoreButton: readMoreButton || "",
       isActive,
-    }
+    };
 
     // Handle image update
-    const imageFile = formData.get("image") as File | null
-    const currentImage = formData.get("currentImage") as string | null
+    const imageFile = formData.get("image") as File | null;
+    const currentImage = formData.get("currentImage") as string | null;
 
     if (imageFile && imageFile.size > 0) {
-      // New image uploaded
-      const bytes = await imageFile.arrayBuffer()
-      const buffer = Buffer.from(bytes)
-
-      // Validate file type
       if (!imageFile.type.startsWith("image/")) {
-        return NextResponse.json({ error: "Only image files are allowed" }, { status: 400 })
+        return NextResponse.json(
+          { error: "Only image files are allowed" },
+          { status: 400 }
+        );
       }
-
-      // Validate file size (5MB limit)
       if (imageFile.size > 5 * 1024 * 1024) {
-        return NextResponse.json({ error: "Image size must be less than 5MB" }, { status: 400 })
+        return NextResponse.json(
+          { error: "Image size must be less than 5MB" },
+          { status: 400 }
+        );
       }
 
-      // Delete old image if exists
       if (existingNews.image) {
         try {
-          await deleteFromS3(existingNews.image)
-        } catch (error) {
-          console.error("Error deleting old image:", error)
+          await deleteFromS3(existingNews.image);
+        } catch (err) {
+          console.error("Error deleting old image:", err);
         }
       }
 
-      updateData.image = await uploadToS3(buffer, imageFile.name, imageFile.type)
+      updateData.image = await uploadToS3(imageFile);
     } else if (currentImage) {
-      // Keep current image
-      updateData.image = currentImage
+      updateData.image = currentImage;
     } else {
-      // Remove image
       if (existingNews.image) {
         try {
-          await deleteFromS3(existingNews.image)
-        } catch (error) {
-          console.error("Error deleting image:", error)
+          await deleteFromS3(existingNews.image);
+        } catch (err) {
+          console.error("Error deleting image:", err);
         }
       }
-      updateData.image = ""
+      updateData.image = "";
     }
 
     // Handle video update
-    const videoFile = formData.get("video") as File | null
-    const currentVideo = formData.get("currentVideo") as string | null
+    const videoFile = formData.get("video") as File | null;
+    const currentVideo = formData.get("currentVideo") as string | null;
 
     if (videoFile && videoFile.size > 0) {
-      // New video uploaded
-      const bytes = await videoFile.arrayBuffer()
-      const buffer = Buffer.from(bytes)
-
-      // Validate file type
       if (!videoFile.type.startsWith("video/")) {
-        return NextResponse.json({ error: "Only video files are allowed" }, { status: 400 })
+        return NextResponse.json(
+          { error: "Only video files are allowed" },
+          { status: 400 }
+        );
       }
-
-      // Validate file size (50MB limit for videos)
       if (videoFile.size > 50 * 1024 * 1024) {
-        return NextResponse.json({ error: "Video size must be less than 50MB" }, { status: 400 })
+        return NextResponse.json(
+          { error: "Video size must be less than 50MB" },
+          { status: 400 }
+        );
       }
 
-      // Delete old video if exists
       if (existingNews.video) {
         try {
-          await deleteFromS3(existingNews.video)
-        } catch (error) {
-          console.error("Error deleting old video:", error)
+          await deleteFromS3(existingNews.video);
+        } catch (err) {
+          console.error("Error deleting old video:", err);
         }
       }
 
-      updateData.video = await uploadToS3(buffer, videoFile.name, videoFile.type)
+      updateData.video = await uploadToS3(videoFile);
     } else if (currentVideo) {
-      // Keep current video
-      updateData.video = currentVideo
+      updateData.video = currentVideo;
     } else {
-      // Remove video
       if (existingNews.video) {
         try {
-          await deleteFromS3(existingNews.video)
-        } catch (error) {
-          console.error("Error deleting video:", error)
+          await deleteFromS3(existingNews.video);
+        } catch (err) {
+          console.error("Error deleting video:", err);
         }
       }
-      updateData.video = ""
+      updateData.video = "";
     }
 
     const updatedNews = await News.findByIdAndUpdate(id, updateData, {
       new: true,
-      runValidators: true
-    })
+      runValidators: true,
+    });
 
     return NextResponse.json({
       message: "News updated successfully",
       news: updatedNews,
-    })
+    });
   } catch (error: any) {
-    console.error("Update news error:", error)
+    console.error("Update news error:", error);
     return NextResponse.json(
       { error: error.message || "Failed to update news" },
-      { status: error.message === "Authentication failed" ? 401 : 500 },
-    )
+      { status: error.message === "Authentication failed" ? 401 : 500 }
+    );
   }
 }
 

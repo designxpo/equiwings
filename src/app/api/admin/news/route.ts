@@ -93,40 +93,30 @@ export async function POST(request: NextRequest) {
     }
 
     // Handle image upload
-    const imageFile = formData.get("image") as File | null
+    // Handle image upload
+    const imageFile = formData.get("image") as File | null;
     if (imageFile && imageFile.size > 0) {
-      const bytes = await imageFile.arrayBuffer()
-      const buffer = Buffer.from(bytes)
-
       if (!imageFile.type.startsWith("image/")) {
-        return NextResponse.json({ error: "Only image files are allowed" }, { status: 400 })
+        return NextResponse.json({ error: "Only image files are allowed" }, { status: 400 });
       }
-
       if (imageFile.size > 5 * 1024 * 1024) {
-        return NextResponse.json({ error: "Image size must be less than 5MB" }, { status: 400 })
+        return NextResponse.json({ error: "Image size must be less than 5MB" }, { status: 400 });
       }
 
-      newsData.image = await uploadToS3(buffer, imageFile.name, imageFile.type)
+      newsData.image = await uploadToS3(imageFile); // ✅ stream upload
     }
 
     // Handle video upload
-    const videoFile = formData.get("video") as File | null
+    const videoFile = formData.get("video") as File | null;
     if (videoFile && videoFile.size > 0) {
-      const bytes = await videoFile.arrayBuffer()
-      const buffer = Buffer.from(bytes)
-
       if (!videoFile.type.startsWith("video/")) {
-        return NextResponse.json({ error: "Only video files are allowed" }, { status: 400 })
+        return NextResponse.json({ error: "Only video files are allowed" }, { status: 400 });
       }
-
       if (videoFile.size > 50 * 1024 * 1024) {
-        return NextResponse.json(
-          { error: "Video size must be less than 50MB" },
-          { status: 400 },
-        )
+        return NextResponse.json({ error: "Video size must be less than 50MB" }, { status: 400 });
       }
 
-      newsData.video = await uploadToS3(buffer, videoFile.name, videoFile.type)
+      newsData.video = await uploadToS3(videoFile); // ✅ stream upload
     }
 
     const newEntry = await News.create(newsData)

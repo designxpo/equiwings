@@ -108,8 +108,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (featuredImageFile && featuredImageFile.size > 0) {
       try {
         // Upload new image
-        const imageBuffer = Buffer.from(await featuredImageFile.arrayBuffer())
-        featuredImageUrl = await uploadToS3(imageBuffer, featuredImageFile.name, featuredImageFile.type)
+        featuredImageUrl = await uploadToS3(featuredImageFile)
 
         // Delete old image if it exists and upload was successful
         if (existingBlog.featuredImage) {
