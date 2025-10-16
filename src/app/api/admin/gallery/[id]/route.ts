@@ -108,7 +108,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                 }
             }
 
-            updateData.image = await uploadToS3(buffer, imageFile.name, imageFile.type)
+            updateData.image = await uploadToS3(imageFile)
         } else if (currentImage) {
             // Keep current image
             updateData.image = currentImage

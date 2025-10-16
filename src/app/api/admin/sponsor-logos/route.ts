@@ -87,8 +87,6 @@ export async function POST(request: NextRequest) {
 
         // Upload image to S3 if provided
         if (imageFile && imageFile.size > 0) {
-            const bytes = await imageFile.arrayBuffer()
-            const buffer = Buffer.from(bytes)
 
             // Validate file type
             if (!imageFile.type.startsWith("image/")) {
@@ -106,7 +104,7 @@ export async function POST(request: NextRequest) {
                 )
             }
 
-            logo_url = await uploadToS3(buffer, imageFile.name, imageFile.type)
+            logo_url = await uploadToS3(imageFile)
         }
 
         // Check for duplicate order in the same type if active
