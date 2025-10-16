@@ -22,6 +22,7 @@ interface NewsItem {
   newsDate: string
   newsType: "primary" | "secondary"
   isActive: boolean
+  video?: string
 }
 
 const News: React.FC = () => {
@@ -58,6 +59,37 @@ const News: React.FC = () => {
   // Separate primary and secondary news based on newsType
   const primaryNews = newsData.filter(news => news.newsType === "primary")
   const secondaryNews = newsData.filter(news => news.newsType === "secondary")
+
+  // Separate images and videos from secondary news
+  const secondaryImages = secondaryNews.filter(news => news.image && !news.video)
+  const secondaryVideos = secondaryNews.filter(news => news.video)
+
+  // Create groups: 4 images, then 3 videos, repeating
+  const createGroupedSlides = () => {
+    const groups = []
+    let imageIndex = 0
+    let videoIndex = 0
+
+    while (imageIndex < secondaryImages.length || videoIndex < secondaryVideos.length) {
+      // Add group of 4 images
+      if (imageIndex < secondaryImages.length) {
+        const imageGroup = secondaryImages.slice(imageIndex, imageIndex + 4)
+        groups.push({ type: 'images', items: imageGroup })
+        imageIndex += 4
+      }
+
+      // Add group of 3 videos
+      if (videoIndex < secondaryVideos.length) {
+        const videoGroup = secondaryVideos.slice(videoIndex, videoIndex + 3)
+        groups.push({ type: 'videos', items: videoGroup })
+        videoIndex += 3
+      }
+    }
+
+    return groups
+  }
+
+  const groupedSlides = createGroupedSlides()
 
   // Format date function
   const formatDate = (dateString: string) => {
@@ -266,8 +298,8 @@ const News: React.FC = () => {
           transition={{ duration: 0.6, delay: 0.3 }}
         >
           <Swiper
-            modules={[Pagination, Autoplay]}
-            spaceBetween={30}
+            modules={[Autoplay, Pagination]}
+            spaceBetween={20}
             slidesPerView={1}
             pagination={{
               clickable: true,
@@ -277,9 +309,10 @@ const News: React.FC = () => {
             autoplay={{
               delay: 5000,
               disableOnInteraction: false,
+              pauseOnMouseEnter: true,
             }}
-            loop={primaryNews.length > 1}
-            className="news-swiper"
+            loop={groupedSlides.length > 1}
+            className="secondary-news-swiper pb-12"
           >
             {primaryNews.map((news) => (
               <SwiperSlide key={news._id}>
@@ -353,126 +386,154 @@ const News: React.FC = () => {
         </motion.div>
       )}
 
-      {/* Secondary News - Swiper Slider with A4 size images */}
-      {secondaryNews.length > 0 && (
+      {/* Secondary News - Grouped Slider (4 images, then 3 videos) */}
+      {groupedSlides.length > 0 && (
         <motion.div
-          className="max-w-7xl mx-auto p-5 md:-8 lg:-12"
+          className="max-w-7xl mx-auto p-5 md:p-8 lg:p-12"
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.4 }}
         >
-
-          {/* Secondary News Slider */}
+          {/* Grouped News Slider */}
           <div className="relative secondary-news-slider">
             <Swiper
-              modules={[Autoplay]}
+              modules={[Autoplay, Pagination]}
               spaceBetween={20}
               slidesPerView={1}
-              slidesPerGroup={1}
-              breakpoints={{
-                640: {
-                  slidesPerView: 2,
-                  spaceBetween: 20,
-                },
-                768: {
-                  slidesPerView: 2,
-                  spaceBetween: 24,
-                },
-                1024: {
-                  slidesPerView: 3,
-                  spaceBetween: 32,
-                },
-                1280: {
-                  slidesPerView: 4,
-                  spaceBetween: 32,
-                },
+              pagination={{
+                clickable: true,
+                bulletClass: "swiper-pagination-bullet",
+                bulletActiveClass: "swiper-pagination-bullet-active",
               }}
               autoplay={{
-                delay: 3000,
+                delay: 5000,
                 disableOnInteraction: false,
               }}
-              loop={secondaryNews.length > 4}
+              loop={groupedSlides.length > 1}
               className="secondary-news-swiper pb-12"
             >
-              {secondaryNews.map((news, index) => (
-                <SwiperSlide key={news._id}>
-                  <motion.div
-                    className="flex flex-col items-center h-full"
-                    variants={gridItemVariants}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true }}
-                  >
-                    {/* Date on top for even index items */}
-                    {index % 2 === 0 && (
+              {groupedSlides.map((group, groupIndex) => (
+                <SwiperSlide key={`group-${groupIndex}`}>
+                  <div className={`grid gap-8 ${group.type === 'images'
+                    ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+                    : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                    }`}>
+                    {group.items.map((news, index) => (
                       <motion.div
-                        className="mb-4"
-                        variants={textItemVariants}
+                        key={news._id}
+                        className="flex flex-col items-center h-full"
+                        variants={gridItemVariants}
+                        initial="hidden"
+                        whileInView="visible"
+                        viewport={{ once: true }}
                       >
-                        <p className="text-lg md:text-xl font-bold text-[#350D3C] text-center">
-                          {formatDate(news.newsDate)}
-                        </p>
-                      </motion.div>
-                    )}
+                        {group.type === 'images' ? (
+                          <>
+                            {/* Date on top for even index items */}
+                            {index % 2 === 0 && (
+                              <motion.div
+                                className="mb-4"
+                                variants={textItemVariants}
+                              >
+                                <p className="text-lg md:text-xl font-bold text-[#350D3C] text-center">
+                                  {formatDate(news.newsDate)}
+                                </p>
+                              </motion.div>
+                            )}
 
-                    {/* Framed News Image - A4 Size */}
-                    <motion.div
-                      className="relative w-full max-w-sm cursor-pointer p-5"
-                      style={{ aspectRatio: '210/297' }} // A4 aspect ratio
-                      whileHover={{
-                        y: -5,
-                        transition: { duration: 0.3 }
-                      }}
-                      onClick={() => openModal(news)}
-                    >
-                      {/* Frame Container */}
-                      <div className="relative w-full h-full">
-                        {/* News Image - positioned behind the frame */}
-                        <div className="absolute inset-0 z-10">
-                          <div className="w-full h-full relative p-6">
-                            <Image
-                              src={news.image}
-                              alt={news.title}
-                              fill
-                              className="object-cover rounded-lg p-3"
-                              sizes="(max-width: 640px) 90vw, (max-width: 768px) 45vw, (max-width: 1024px) 30vw, 22vw"
-                              onError={(e) => {
-                                console.error('Image failed to load:', news.image);
+                            {/* Framed News Image - A4 Size */}
+                            <motion.div
+                              className="relative w-full max-w-sm cursor-pointer p-5"
+                              style={{ aspectRatio: '210/297' }}
+                              whileHover={{
+                                y: -5,
+                                transition: { duration: 0.3 }
                               }}
-                            />
-                          </div>
-                        </div>
+                              onClick={() => openModal(news)}
+                            >
+                              {/* Frame Container */}
+                              <div className="relative w-full h-full">
+                                {/* News Image - positioned behind the frame */}
+                                <div className="absolute inset-0 z-10">
+                                  <div className="w-full h-full relative p-6">
+                                    <Image
+                                      src={news.image}
+                                      alt={news.title}
+                                      fill
+                                      className="object-cover rounded-lg p-3"
+                                      sizes="(max-width: 640px) 90vw, (max-width: 768px) 45vw, (max-width: 1024px) 30vw, 22vw"
+                                      onError={(e) => {
+                                        console.error('Image failed to load:', news.image);
+                                      }}
+                                    />
+                                  </div>
+                                </div>
 
-                        {/* Frame Image - positioned on top */}
-                        <div className="relative z-20 w-full h-full">
-                          <Image
-                            src={frame}
-                            alt="News frame"
-                            fill
-                            className="object-contain pointer-events-none"
-                            sizes="(max-width: 640px) 90vw, (max-width: 768px) 45vw, (max-width: 1024px) 30vw, 22vw"
-                          />
-                        </div>
-                      </div>
-                    </motion.div>
+                                {/* Frame Image - positioned on top */}
+                                <div className="relative z-20 w-full h-full">
+                                  <Image
+                                    src={frame}
+                                    alt="News frame"
+                                    fill
+                                    className="object-contain pointer-events-none"
+                                    sizes="(max-width: 640px) 90vw, (max-width: 768px) 45vw, (max-width: 1024px) 30vw, 22vw"
+                                  />
+                                </div>
+                              </div>
+                            </motion.div>
 
-                    {/* Date on bottom for odd index items */}
-                    {index % 2 === 1 && (
-                      <motion.div
-                        className="mt-4"
-                        variants={textItemVariants}
-                      >
-                        <p className="text-lg md:text-xl font-bold text-[#350D3C] text-center">
-                          {formatDate(news.newsDate)}
-                        </p>
+                            {/* Date on bottom for odd index items */}
+                            {index % 2 === 1 && (
+                              <motion.div
+                                className="mt-4"
+                                variants={textItemVariants}
+                              >
+                                <p className="text-lg md:text-xl font-bold text-[#350D3C] text-center">
+                                  {formatDate(news.newsDate)}
+                                </p>
+                              </motion.div>
+                            )}
+                          </>
+                        ) : (
+                          /* Video Display */
+                          <motion.div
+                            className="relative w-full max-w-md aspect-video rounded-lg overflow-hidden shadow-xl cursor-pointer"
+                            whileHover={{
+                              y: -5,
+                              transition: { duration: 0.3 }
+                            }}
+                            onClick={() => openModal(news)}
+                          >
+                            <video
+                              src={news.video}
+                              className="w-full h-full object-cover"
+                              poster={news.image || undefined}
+                            >
+                              Your browser does not support the video tag.
+                            </video>
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors">
+                              <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
+                                <svg className="w-8 h-8 text-[#350D3C] ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M8 5v14l11-7z" />
+                                </svg>
+                              </div>
+                            </div>
+                            {news.title && (
+                              <div className="mt-4 text-center">
+                                <p className="text-base font-semibold text-[#350D3C]">
+                                  {news.title}
+                                </p>
+                              </div>
+                            )}
+                          </motion.div>
+                        )}
                       </motion.div>
-                    )}
-                  </motion.div>
+                    ))}
+                  </div>
                 </SwiperSlide>
               ))}
             </Swiper>
-
           </div>
         </motion.div>
       )}
@@ -496,7 +557,6 @@ const News: React.FC = () => {
           >
             {/* Modal Header */}
             <div className="bg-[#350D3C] text-white p-4 flex justify-between items-center">
-              {/* <h3 className="text-lg font-semibold">{formatDate(modalImage.newsDate)}</h3> */}
               <div></div>
               <button
                 onClick={closeModal}
@@ -508,42 +568,58 @@ const News: React.FC = () => {
 
             {/* Optional: News Title at Bottom */}
             <div className="pt-6 px-4 md:px-8 bg-gray-50">
-              <h4 className="text-[#350D3C] text-lg font-semibold">{formatDate(modalImage?.newsDate)}</h4>
+              <h4 className="text-[#350D3C] text-lg font-semibold">
+                {modalImage.video ? modalImage.title : formatDate(modalImage?.newsDate)}
+              </h4>
             </div>
 
-            {/* Modal Body with Framed Image */}
+            {/* Modal Body with Framed Image or Video */}
             <div className="px-4 pb-6 pt-2 flex justify-center items-center bg-gray-50">
-              <div className="relative w-full max-w-sm mx-auto" style={{ aspectRatio: '210/297' }}>
-                {/* Frame Container */}
-                <div className="relative w-full h-full">
-                  {/* News Image - positioned behind the frame */}
-                  <div className="absolute inset-0 z-10 p-8">
-                    <div className="w-full h-full relative">
+              {modalImage.video ? (
+                /* Video Modal */
+                <div className="relative w-full aspect-video rounded-lg overflow-hidden">
+                  <video
+                    src={modalImage.video}
+                    controls
+                    autoPlay
+                    className="w-full h-full object-cover"
+                    poster={modalImage.image || undefined}
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+              ) : (
+                /* Image Modal with Frame */
+                <div className="relative w-full max-w-sm mx-auto" style={{ aspectRatio: '210/297' }}>
+                  {/* Frame Container */}
+                  <div className="relative w-full h-full">
+                    {/* News Image - positioned behind the frame */}
+                    <div className="absolute inset-0 z-10 p-8">
+                      <div className="w-full h-full relative">
+                        <Image
+                          src={modalImage.image}
+                          alt={modalImage.title}
+                          fill
+                          className="object-cover rounded-sm"
+                          sizes="(max-width: 768px) 90vw, 400px"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Frame Image - positioned on top */}
+                    <div className="relative z-20 w-full h-full">
                       <Image
-                        src={modalImage.image}
-                        alt={modalImage.title}
+                        src={frame}
+                        alt="News frame"
                         fill
-                        className="object-cover rounded-sm"
+                        className="object-contain pointer-events-none"
                         sizes="(max-width: 768px) 90vw, 400px"
                       />
                     </div>
                   </div>
-
-                  {/* Frame Image - positioned on top */}
-                  <div className="relative z-20 w-full h-full">
-                    <Image
-                      src={frame}
-                      alt="News frame"
-                      fill
-                      className="object-contain pointer-events-none"
-                      sizes="(max-width: 768px) 90vw, 400px"
-                    />
-                  </div>
                 </div>
-              </div>
+              )}
             </div>
-
-
           </motion.div>
         </motion.div>
       )}
@@ -564,12 +640,14 @@ const News: React.FC = () => {
           }
         }
         
-        .news-swiper .swiper-pagination-bullet {
+        .news-swiper .swiper-pagination-bullet,
+        .secondary-news-swiper .swiper-pagination-bullet {
           background: #350D3C;
           opacity: 0.3;
         }
         
-        .news-swiper .swiper-pagination-bullet-active {
+        .news-swiper .swiper-pagination-bullet-active,
+        .secondary-news-swiper .swiper-pagination-bullet-active {
           opacity: 1;
         }
       `}</style>

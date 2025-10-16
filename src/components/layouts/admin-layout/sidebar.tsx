@@ -18,6 +18,8 @@ const navigation = [
     { name: "Blogs", href: "/admin/blogs", icon: FaBloggerB },
     { name: "SEO Management", href: "/admin/seo-manage", icon: MdSearch },
     { name: "Sponsor Logos", href: "/admin/logos", icon: MdImage },
+    { name: "Gallery", href: "/admin/gallery", icon: MdImage },
+
 ]
 
 export function Sidebar() {
