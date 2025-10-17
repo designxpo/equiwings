@@ -85,7 +85,10 @@ export async function PUT(request: NextRequest, { params }: Params) {
                 }
             }
 
-            const logoUrl = await uploadToS3(imageFile); // ✅ stream directly
+            // Upload new logo
+            const bytes = await imageFile.arrayBuffer()
+            const buffer = Buffer.from(bytes)
+            const logoUrl = await uploadToS3(buffer, imageFile.name, imageFile.type)
             updateData.logo_url = logoUrl
         }
 

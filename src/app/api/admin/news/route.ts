@@ -3,7 +3,6 @@ import { type NextRequest, NextResponse } from "next/server"
 import connectDB from "@/lib/db/connection"
 import News from "@/lib/models/News"
 import { authenticate } from "@/lib/middleware/auth"
-import { uploadToS3 } from "@/lib/utils/s3"
 
 export async function GET(request: NextRequest) {
   try {
@@ -62,17 +61,12 @@ export async function POST(request: NextRequest) {
     const user = await authenticate(request)
     await connectDB()
 
-    const formData = await request.formData()
-    const title = (formData.get("title") as string)?.trim()
-    const description = (formData.get("description") as string)?.trim()
-    const newsDate = (formData.get("newsDate") as string)?.trim()
-    const newsType = (formData.get("newsType") as string)?.trim()
-    const readMoreButton = (formData.get("readMoreButton") as string)?.trim()
-    const isActiveRaw = formData.get("isActive")
-    const isActive = isActiveRaw ? isActiveRaw === "true" : true // fallback to schema default
+    // Now receiving JSON instead of FormData
+    const body = await request.json()
+    const { title, description, newsDate, newsType, readMoreButton, isActive, image, video } = body
 
     // Validation
-    if (!title || !description || !newsType) {
+    if (!title?.trim() || !description?.trim() || !newsType) {
       return NextResponse.json(
         { error: "Title, description, and news type are required" },
         { status: 400 },
@@ -84,51 +78,15 @@ export async function POST(request: NextRequest) {
     }
 
     const newsData: any = {
-      title,
-      description,
-      newsDate,
+      title: title.trim(),
+      description: description.trim(),
+      newsDate: newsDate?.trim() || "",
       newsType,
-      readMoreButton: readMoreButton || "",
-      isActive,
+      readMoreButton: readMoreButton?.trim() || "",
+      isActive: isActive ?? true,
+      image: image || "",
+      video: video || "",
     }
-
-    if (formData.get("image")) {
-      newsData.image = formData.get("image")
-    } else {
-      newsData.image = null
-    }
-
-    if (formData.get("video")) {
-      newsData.video = formData.get("video")
-    } else {
-      newsData.video = null
-    }
-
-    // Handle image upload
-    // const imageFile = formData.get("image") as File | null;
-    // if (imageFile && imageFile.size > 0) {
-    //   if (!imageFile.type.startsWith("image/")) {
-    //     return NextResponse.json({ error: "Only image files are allowed" }, { status: 400 });
-    //   }
-    //   if (imageFile.size > 5 * 1024 * 1024) {
-    //     return NextResponse.json({ error: "Image size must be less than 5MB" }, { status: 400 });
-    //   }
-
-    //   newsData.image = await uploadToS3(imageFile); // ✅ stream upload
-    // }
-
-    // // Handle video upload
-    // const videoFile = formData.get("video") as File | null;
-    // if (videoFile && videoFile.size > 0) {
-    //   if (!videoFile.type.startsWith("video/")) {
-    //     return NextResponse.json({ error: "Only video files are allowed" }, { status: 400 });
-    //   }
-    //   if (videoFile.size > 50 * 1024 * 1024) {
-    //     return NextResponse.json({ error: "Video size must be less than 50MB" }, { status: 400 });
-    //   }
-
-    //   newsData.video = await uploadToS3(videoFile); // ✅ stream upload
-    // }
 
     const newEntry = await News.create(newsData)
 
@@ -146,12 +104,4 @@ export async function POST(request: NextRequest) {
       { status: error.message === "Authentication failed" ? 401 : 500 },
     )
   }
-}
-
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: "100mb", // or whatever limit you want (e.g. 200mb)
-    },
-  },
 }

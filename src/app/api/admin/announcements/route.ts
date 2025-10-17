@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Image size must be less than 5MB" }, { status: 400 })
       }
 
-      imageUrl = await uploadToS3(imageFile)
+      imageUrl = await uploadToS3(buffer, imageFile.name, imageFile.type)
     }
 
     const newEntry = await Announcement.create({

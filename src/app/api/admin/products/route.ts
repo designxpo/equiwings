@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
     }
 
     const mainImageBuffer = Buffer.from(await mainImageFile.arrayBuffer())
-    const mainImageUrl = await uploadToS3(mainImageFile)
+    const mainImageUrl = await uploadToS3(mainImageBuffer, mainImageFile.name, mainImageFile.type)
 
     // Handle additional images
     const additionalImages: string[] = []
@@ -132,7 +132,8 @@ export async function POST(request: NextRequest) {
     for (let i = 0; i < additionalImagesFiles.length && i < 5; i++) {
       const imageFile = additionalImagesFiles[i]
       if (imageFile && imageFile.size > 0) {
-        const imageUrl = await uploadToS3(imageFile)
+        const imageBuffer = Buffer.from(await imageFile.arrayBuffer())
+        const imageUrl = await uploadToS3(imageBuffer, imageFile.name, imageFile.type)
         additionalImages.push(imageUrl)
       }
     }

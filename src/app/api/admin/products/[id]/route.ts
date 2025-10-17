@@ -117,7 +117,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     // Handle main image upload if provided
     const mainImageFile = formData.get("mainImage") as File
     if (mainImageFile && mainImageFile.size > 0) {
-      const mainImageUrl = await uploadToS3(mainImageFile)
+      const mainImageBuffer = Buffer.from(await mainImageFile.arrayBuffer())
+      const mainImageUrl = await uploadToS3(mainImageBuffer, mainImageFile.name, mainImageFile.type)
       updateData.mainImage = mainImageUrl
     }
 
@@ -127,7 +128,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     for (let i = 0; i < additionalImagesFiles.length && i < 5; i++) {
       const imageFile = additionalImagesFiles[i]
       if (imageFile && imageFile.size > 0) {
-        const imageUrl = await uploadToS3(imageFile)
+        const imageBuffer = Buffer.from(await imageFile.arrayBuffer())
+        const imageUrl = await uploadToS3(imageBuffer, imageFile.name, imageFile.type)
         additionalImages.push(imageUrl)
       }
     }

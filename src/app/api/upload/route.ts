@@ -26,7 +26,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "File too large. Maximum size is 5MB." }, { status: 400 })
     }
 
-    const url = await uploadToS3(file)
+    const buffer = Buffer.from(await file.arrayBuffer())
+    const url = await uploadToS3(buffer, file.name, file.type)
 
     return NextResponse.json({
       message: "File uploaded successfully",

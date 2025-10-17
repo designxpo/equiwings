@@ -97,7 +97,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
 
       // Upload new image
-      const imageUrl = await uploadToS3(imageFile)
+      const bytes = await imageFile.arrayBuffer()
+      const buffer = Buffer.from(bytes)
+      const imageUrl = await uploadToS3(buffer, imageFile.name, imageFile.type)
       updateData.image = imageUrl
     }
 

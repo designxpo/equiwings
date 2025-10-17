@@ -131,7 +131,8 @@ export async function POST(request: NextRequest) {
 
         if (featuredImageFile && featuredImageFile.size > 0) {
             try {
-                featuredImageUrl = await uploadToS3(featuredImageFile)
+                const imageBuffer = Buffer.from(await featuredImageFile.arrayBuffer())
+                featuredImageUrl = await uploadToS3(imageBuffer, featuredImageFile.name, featuredImageFile.type)
             } catch (uploadError) {
                 return NextResponse.json(
                     { error: "Failed to upload featured image" },
