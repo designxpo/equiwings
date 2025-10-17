@@ -30,8 +30,6 @@ interface EditNewsOffcanvasProps {
 
 export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news }: EditNewsOffcanvasProps) {
   const [loading, setLoading] = useState(false)
-  const [uploadingImage, setUploadingImage] = useState(false)
-  const [uploadingVideo, setUploadingVideo] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
   const [formData, setFormData] = useState({
     title: "",
@@ -40,15 +38,18 @@ export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news
     readMoreButton: "",
     isActive: true,
   })
-
-  // Media fields - now store URLs
-  const [imageUrl, setImageUrl] = useState<string>("")
+  
+  // Media fields
+  const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>("")
-  const [videoUrl, setVideoUrl] = useState<string>("")
+  const [currentImage, setCurrentImage] = useState<string>("")
+  const [videoFile, setVideoFile] = useState<File | null>(null)
   const [videoPreview, setVideoPreview] = useState<string>("")
-
+  const [currentVideo, setCurrentVideo] = useState<string>("")
+  
   const [errors, setErrors] = useState<any>({})
 
+  // Handle smooth transitions
   useEffect(() => {
     if (isOpen) {
       setIsAnimating(true)
@@ -61,6 +62,7 @@ export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news
     }
   }, [isOpen])
 
+  // Populate form data when news prop changes
   useEffect(() => {
     if (isOpen && news) {
       setFormData({
@@ -70,12 +72,16 @@ export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news
         readMoreButton: news.readMoreButton || "",
         isActive: news.isActive ?? true,
       })
-
+      
       // Set current media
-      setImageUrl(news.image || "")
-      setImagePreview(news.image || "")
-      setVideoUrl(news.video || "")
-      setVideoPreview(news.video || "")
+      setCurrentImage(news.image || "")
+      setCurrentVideo(news.video || "")
+      
+      // Reset new uploads
+      setImageFile(null)
+      setImagePreview("")
+      setVideoFile(null)
+      setVideoPreview("")
       setErrors({})
     }
   }, [isOpen, news])
@@ -84,6 +90,7 @@ export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news
     const newErrors: any = {}
     if (!formData.title.trim()) newErrors.title = "Title is required"
     if (!formData.description.trim()) newErrors.description = "Description is required"
+    // if (!formData.newsDate.trim()) newErrors.newsDate = "News date is required"
     return newErrors
   }
 
@@ -105,72 +112,44 @@ export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news
     }
   }
 
-  const uploadFileToS3 = async (file: File): Promise<string> => {
-    try {
-      const presignedResponse = await axiosInstance.post("/admin/news/presigned-url", {
-        fileName: file.name,
-        contentType: file.type,
-      })
-
-      const { uploadUrl, fileUrl } = presignedResponse.data
-
-      const uploadResponse = await fetch(uploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: {
-          "Content-Type": file.type,
-        },
-      })
-
-      if (!uploadResponse.ok) {
-        throw new Error("Failed to upload file to S3")
-      }
-
-      return fileUrl
-    } catch (error: any) {
-      console.error("S3 upload error:", error)
-      throw new Error(error.response?.data?.error || "Failed to upload file")
-    }
-  }
-
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       try {
         validateFile(file, 'image')
+        setImageFile(file)
 
-        setUploadingImage(true)
-        const url = await uploadFileToS3(file)
-        setImageUrl(url)
-        setImagePreview(url)
-        toast.success("Image uploaded successfully!")
+        // Create preview
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          setImagePreview(e.target?.result as string)
+        }
+        reader.readAsDataURL(file)
         setErrors((prev: any) => ({ ...prev, image: "" }))
       } catch (error: any) {
         toast.error(error.message)
-        e.target.value = ''
-      } finally {
-        setUploadingImage(false)
+        e.target.value = '' // Reset input
       }
     }
   }
 
-  const handleVideoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       try {
         validateFile(file, 'video')
+        setVideoFile(file)
 
-        setUploadingVideo(true)
-        const url = await uploadFileToS3(file)
-        setVideoUrl(url)
-        setVideoPreview(url)
-        toast.success("Video uploaded successfully!")
+        // Create preview
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          setVideoPreview(e.target?.result as string)
+        }
+        reader.readAsDataURL(file)
         setErrors((prev: any) => ({ ...prev, video: "" }))
       } catch (error: any) {
         toast.error(error.message)
-        e.target.value = ''
-      } finally {
-        setUploadingVideo(false)
+        e.target.value = '' // Reset input
       }
     }
   }
@@ -187,19 +166,32 @@ export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news
 
     setLoading(true)
     try {
-      const payload = {
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        newsDate: formData.newsDate.trim(),
-        readMoreButton: formData.readMoreButton.trim(),
-        isActive: formData.isActive,
-        image: imageUrl,
-        video: videoUrl,
+      const submitFormData = new FormData()
+      
+      // Always include required fields
+      submitFormData.append("title", formData.title.trim())
+      submitFormData.append("description", formData.description.trim())
+      submitFormData.append("newsDate", formData.newsDate.trim())
+      submitFormData.append("isActive", formData.isActive.toString())
+      submitFormData.append("readMoreButton", formData.readMoreButton.trim())
+
+      // Handle image
+      if (imageFile) {
+        submitFormData.append("image", imageFile)
+      } else if (currentImage) {
+        submitFormData.append("currentImage", currentImage)
       }
 
-      const response = await axiosInstance.put(`/admin/news/${news._id}`, payload, {
+      // Handle video
+      if (videoFile) {
+        submitFormData.append("video", videoFile)
+      } else if (currentVideo) {
+        submitFormData.append("currentVideo", currentVideo)
+      }
+
+      const response = await axiosInstance.put(`/admin/news/${news._id}`, submitFormData, {
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "multipart/form-data",
         },
       })
 
@@ -209,7 +201,8 @@ export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || "Failed to update news"
       toast.error(errorMessage)
-
+      
+      // Handle specific validation errors
       if (error.response?.status === 400) {
         setErrors({ general: errorMessage })
       }
@@ -229,7 +222,7 @@ export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news
   }
 
   const handleClose = () => {
-    if (!loading && !uploadingImage && !uploadingVideo) {
+    if (!loading) {
       setIsAnimating(false)
       setTimeout(() => {
         setFormData({
@@ -239,10 +232,12 @@ export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news
           readMoreButton: "",
           isActive: true,
         })
-        setImageUrl("")
+        setImageFile(null)
         setImagePreview("")
-        setVideoUrl("")
+        setCurrentImage("")
+        setVideoFile(null)
         setVideoPreview("")
+        setCurrentVideo("")
         setErrors({})
         onClose()
       }, 300)
@@ -256,23 +251,29 @@ export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news
   }
 
   const inputClass = (field: string) =>
-    `w-full px-3 py-2 border ${errors[field] ? "border-red-500" : "border-gray-300"
+    `w-full px-3 py-2 border ${
+      errors[field] ? "border-red-500" : "border-gray-300"
     } rounded-lg focus:ring-2 outline-none focus:ring-cardinal-pink-800 focus:border-cardinal-pink-800 transition-colors`
 
   if (!isOpen && !isAnimating) return null
 
   return (
     <div className="fixed inset-0 z-50">
+      {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black transition-opacity duration-300 ease-in-out ${isOpen && isAnimating ? "opacity-50" : "opacity-0"
-          }`}
+        className={`fixed inset-0 bg-black transition-opacity duration-300 ease-in-out ${
+          isOpen && isAnimating ? "opacity-50" : "opacity-0"
+        }`}
         onClick={handleBackdropClick}
       />
+      {/* Offcanvas Panel */}
       <div
-        className={`fixed top-0 right-0 h-full w-full max-w-2xl bg-white shadow-2xl transform transition-transform duration-300 ease-in-out ${isOpen && isAnimating ? "translate-x-0" : "translate-x-full"
-          }`}
+        className={`fixed top-0 right-0 h-full w-full max-w-2xl bg-white shadow-2xl transform transition-transform duration-300 ease-in-out ${
+          isOpen && isAnimating ? "translate-x-0" : "translate-x-full"
+        }`}
       >
         <div className="flex flex-col h-full">
+          {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gray-50">
             <div>
               <h2 className="text-xl font-bold text-gray-900">Edit News</h2>
@@ -282,22 +283,25 @@ export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news
             </div>
             <button
               onClick={handleClose}
-              disabled={loading || uploadingImage || uploadingVideo}
+              disabled={loading}
               className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors"
             >
               <FiX className="h-5 w-5" />
             </button>
           </div>
-
+          
+          {/* Form Content - Scrollable */}
           <div className="flex-1 overflow-y-auto">
             <form onSubmit={handleSubmit} className="p-6">
               <div className="space-y-6">
+                {/* General Error */}
                 {errors.general && (
                   <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                     <p className="text-sm text-red-600">{errors.general}</p>
                   </div>
                 )}
 
+                {/* News Type Display */}
                 {news && (
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-2">
@@ -314,6 +318,7 @@ export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news
                   </div>
                 )}
 
+                {/* Common Fields */}
                 <div>
                   <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
                     Title <span className="text-red-500">*</span>
@@ -348,7 +353,8 @@ export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news
 
                 <div>
                   <label htmlFor="newsDate" className="block text-sm font-medium text-gray-700 mb-2">
-                    News Date
+                    News Date 
+                    {/* <span className="text-red-500">*</span> */}
                   </label>
                   <input
                     type="date"
@@ -358,6 +364,7 @@ export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news
                     onChange={handleChange}
                     className={inputClass("newsDate")}
                   />
+                  {errors.newsDate && <p className="text-sm text-red-500 mt-1">{errors.newsDate}</p>}
                 </div>
 
                 <div>
@@ -375,24 +382,101 @@ export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news
                   />
                 </div>
 
+                {/* Image Field */}
                 <div>
                   <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-2">
                     Image
                   </label>
                   <div className="space-y-4">
+                    {/* Current Image */}
+                    {currentImage && !imagePreview && (
+                      <div className="relative">
+                        <img
+                          src={currentImage || "/placeholder.svg"}
+                          alt="Current"
+                          className="w-full h-48 object-cover rounded-lg"
+                        />
+                        <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
+                          Current Image
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setCurrentImage("")}
+                          className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                        >
+                          <FiX className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Upload Area */}
+                    <div className="flex items-center justify-center w-full">
+                      <label
+                        htmlFor="image"
+                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+                      >
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <FiUpload className="w-8 h-8 mb-4 text-gray-500" />
+                          <p className="mb-2 text-sm text-gray-500">
+                            <span className="font-semibold">Click to upload</span> new image
+                          </p>
+                          <p className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
+                        </div>
+                        <input
+                          id="image"
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                        />
+                      </label>
+                    </div>
+
+                    {/* New Image Preview */}
                     {imagePreview && (
                       <div className="relative">
                         <img
-                          src={imagePreview}
+                          src={imagePreview || "/placeholder.svg"}
                           alt="Preview"
                           className="w-full h-48 object-cover rounded-lg"
                         />
+                        <div className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs">
+                          New Image
+                        </div>
                         <button
                           type="button"
                           onClick={() => {
-                            setImageUrl("")
+                            setImageFile(null)
                             setImagePreview("")
                           }}
+                          className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                        >
+                          <FiX className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Video Field */}
+                  {news?.newsType === "secondary" &&  <div>
+                  <label htmlFor="video" className="block text-sm font-medium text-gray-700 mb-2">
+                    Video
+                  </label>
+                  <div className="space-y-4">
+                    {currentVideo && !videoPreview && (
+                      <div className="relative">
+                        <video
+                          src={currentVideo}
+                          className="w-full h-48 object-cover rounded-lg"
+                          controls
+                        />
+                        <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
+                          Current Video
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setCurrentVideo("")}
                           className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
                         >
                           <FiX className="w-4 h-4" />
@@ -402,104 +486,50 @@ export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news
 
                     <div className="flex items-center justify-center w-full">
                       <label
-                        htmlFor="image"
-                        className={`flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 ${uploadingImage ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        htmlFor="video"
+                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
                       >
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          {uploadingImage ? (
-                            <>
-                              <svg className="animate-spin h-8 w-8 mb-4 text-cardinal-pink-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                              <p className="text-sm text-gray-500">Uploading image...</p>
-                            </>
-                          ) : (
-                            <>
-                              <FiUpload className="w-8 h-8 mb-4 text-gray-500" />
-                              <p className="mb-2 text-sm text-gray-500">
-                                <span className="font-semibold">Click to upload</span> new image
-                              </p>
-                              <p className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
-                            </>
-                          )}
+                          <FiVideo className="w-8 h-8 mb-4 text-gray-500" />
+                          <p className="mb-2 text-sm text-gray-500">
+                            <span className="font-semibold">Click to upload</span> new video
+                          </p>
+                          <p className="text-xs text-gray-500">MP4, WebM up to 50MB</p>
                         </div>
                         <input
-                          id="image"
+                          id="video"
                           type="file"
                           className="hidden"
-                          accept="image/*"
-                          onChange={handleImageChange}
-                          disabled={uploadingImage}
+                          accept="video/*"
+                          onChange={handleVideoChange}
                         />
                       </label>
                     </div>
-                  </div>
-                </div>
 
-                {news?.newsType === "secondary" && (
-                  <div>
-                    <label htmlFor="video" className="block text-sm font-medium text-gray-700 mb-2">
-                      Video
-                    </label>
-                    <div className="space-y-4">
-                      {videoPreview && (
-                        <div className="relative">
-                          <video
-                            src={videoPreview}
-                            className="w-full h-48 object-cover rounded-lg"
-                            controls
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setVideoUrl("")
-                              setVideoPreview("")
-                            }}
-                            className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                          >
-                            <FiX className="w-4 h-4" />
-                          </button>
+                    {videoPreview && (
+                      <div className="relative">
+                        <video
+                          src={videoPreview}
+                          className="w-full h-48 object-cover rounded-lg"
+                          controls
+                        />
+                        <div className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs">
+                          New Video
                         </div>
-                      )}
-
-                      <div className="flex items-center justify-center w-full">
-                        <label
-                          htmlFor="video"
-                          className={`flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 ${uploadingVideo ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVideoFile(null)
+                            setVideoPreview("")
+                          }}
+                          className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
                         >
-                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            {uploadingVideo ? (
-                              <>
-                                <svg className="animate-spin h-8 w-8 mb-4 text-cardinal-pink-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <p className="text-sm text-gray-500">Uploading video...</p>
-                              </>
-                            ) : (
-                              <>
-                                <FiVideo className="w-8 h-8 mb-4 text-gray-500" />
-                                <p className="mb-2 text-sm text-gray-500">
-                                  <span className="font-semibold">Click to upload</span> new video
-                                </p>
-                                <p className="text-xs text-gray-500">MP4, WebM up to 50MB</p>
-                              </>
-                            )}
-                          </div>
-                          <input
-                            id="video"
-                            type="file"
-                            className="hidden"
-                            accept="video/*"
-                            onChange={handleVideoChange}
-                            disabled={uploadingVideo}
-                          />
-                        </label>
+                          <FiX className="w-4 h-4" />
+                        </button>
                       </div>
-                    </div>
+                    )}
                   </div>
-                )}
+                </div>}
 
                 <div className="flex items-center">
                   <input
@@ -517,12 +547,13 @@ export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news
               </div>
             </form>
           </div>
-
+          
+          {/* Footer - Fixed at bottom */}
           <div className="flex justify-end space-x-4 p-6 border-t border-gray-200 bg-gray-50">
             <button
               type="button"
               onClick={handleClose}
-              disabled={loading || uploadingImage || uploadingVideo}
+              disabled={loading}
               className="px-6 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
               Cancel
@@ -530,7 +561,7 @@ export default function EditNewsOffcanvas({ isOpen, onClose, onNewsUpdated, news
             <button
               type="submit"
               onClick={handleSubmit}
-              disabled={loading || uploadingImage || uploadingVideo}
+              disabled={loading}
               className="px-6 py-2 bg-cardinal-pink-800 text-white rounded-lg hover:bg-cardinal-pink-900 disabled:opacity-50 transition-colors flex items-center"
             >
               {loading ? (

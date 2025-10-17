@@ -3,6 +3,116 @@ import { type NextRequest, NextResponse } from "next/server"
 import connectDB from "@/lib/db/connection"
 import News from "@/lib/models/News"
 import { authenticate } from "@/lib/middleware/auth"
+import { uploadToS3 } from "@/lib/utils/s3"
+
+// Configure route segment
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+export const maxDuration = 60 // Maximum execution time in seconds
+
+// CRITICAL: Configure body size limit for this route
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '100mb',
+    },
+  },
+}
+
+// Alternative method for App Router
+export async function POST(request: NextRequest) {
+  try {
+    const user = await authenticate(request)
+    await connectDB()
+
+    const formData = await request.formData()
+    const title = (formData.get("title") as string)?.trim()
+    const description = (formData.get("description") as string)?.trim()
+    const newsDate = (formData.get("newsDate") as string)?.trim()
+    const newsType = (formData.get("newsType") as string)?.trim()
+    const readMoreButton = (formData.get("readMoreButton") as string)?.trim()
+    const isActiveRaw = formData.get("isActive")
+    const isActive = isActiveRaw ? isActiveRaw === "true" : true
+
+    // Validation
+    if (!title || !description || !newsType) {
+      return NextResponse.json(
+        { error: "Title, description, and news type are required" },
+        { status: 400 },
+      )
+    }
+
+    if (!["primary", "secondary"].includes(newsType)) {
+      return NextResponse.json({ error: "Invalid news type" }, { status: 400 })
+    }
+
+    const newsData: any = {
+      title,
+      description,
+      newsDate,
+      newsType,
+      readMoreButton: readMoreButton || "",
+      isActive,
+    }
+
+    // Handle image upload
+    const imageFile = formData.get("image") as File | null
+    if (imageFile && imageFile.size > 0) {
+      console.log(`Processing image: ${imageFile.name}, size: ${imageFile.size} bytes`)
+
+      const bytes = await imageFile.arrayBuffer()
+      const buffer = Buffer.from(bytes)
+
+      if (!imageFile.type.startsWith("image/")) {
+        return NextResponse.json({ error: "Only image files are allowed" }, { status: 400 })
+      }
+
+      if (imageFile.size > 5 * 1024 * 1024) {
+        return NextResponse.json({ error: "Image size must be less than 5MB" }, { status: 400 })
+      }
+
+      newsData.image = await uploadToS3(buffer, imageFile.name, imageFile.type)
+    }
+
+    // Handle video upload
+    const videoFile = formData.get("video") as File | null
+    if (videoFile && videoFile.size > 0) {
+      console.log(`Processing video: ${videoFile.name}, size: ${videoFile.size} bytes`)
+
+      const bytes = await videoFile.arrayBuffer()
+      const buffer = Buffer.from(bytes)
+
+      if (!videoFile.type.startsWith("video/")) {
+        return NextResponse.json({ error: "Only video files are allowed" }, { status: 400 })
+      }
+
+      if (videoFile.size > 50 * 1024 * 1024) {
+        return NextResponse.json(
+          { error: "Video size must be less than 50MB" },
+          { status: 400 },
+        )
+      }
+
+      newsData.video = await uploadToS3(buffer, videoFile.name, videoFile.type)
+    }
+
+    const newEntry = await News.create(newsData)
+
+    return NextResponse.json(
+      {
+        message: "News created successfully",
+        news: newEntry,
+      },
+      { status: 201 },
+    )
+  } catch (error: any) {
+    console.error("Create news error:", error)
+    return NextResponse.json(
+      { error: error.message || "Failed to create news" },
+      { status: error.message === "Authentication failed" ? 401 : 500 },
+    )
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -52,56 +162,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       { error: error.message || "Failed to fetch news" },
       { status: 500 },
-    )
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const user = await authenticate(request)
-    await connectDB()
-
-    // Now receiving JSON instead of FormData
-    const body = await request.json()
-    const { title, description, newsDate, newsType, readMoreButton, isActive, image, video } = body
-
-    // Validation
-    if (!title?.trim() || !description?.trim() || !newsType) {
-      return NextResponse.json(
-        { error: "Title, description, and news type are required" },
-        { status: 400 },
-      )
-    }
-
-    if (!["primary", "secondary"].includes(newsType)) {
-      return NextResponse.json({ error: "Invalid news type" }, { status: 400 })
-    }
-
-    const newsData: any = {
-      title: title.trim(),
-      description: description.trim(),
-      newsDate: newsDate?.trim() || "",
-      newsType,
-      readMoreButton: readMoreButton?.trim() || "",
-      isActive: isActive ?? true,
-      image: image || "",
-      video: video || "",
-    }
-
-    const newEntry = await News.create(newsData)
-
-    return NextResponse.json(
-      {
-        message: "News created successfully",
-        news: newEntry,
-      },
-      { status: 201 },
-    )
-  } catch (error: any) {
-    console.error("Create news error:", error)
-    return NextResponse.json(
-      { error: error.message || "Failed to create news" },
-      { status: error.message === "Authentication failed" ? 401 : 500 },
     )
   }
 }
