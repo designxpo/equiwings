@@ -1,41 +1,35 @@
-// api/admin/news/route.ts
+// app/api/admin/news/route.ts
 import { type NextRequest, NextResponse } from "next/server"
 import connectDB from "@/lib/db/connection"
 import News from "@/lib/models/News"
 import { authenticate } from "@/lib/middleware/auth"
-import { uploadToS3 } from "@/lib/utils/s3"
 
 // Configure route segment
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-export const maxDuration = 60 // Maximum execution time in seconds
+export const maxDuration = 60
 
-// CRITICAL: Configure body size limit for this route
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '100mb',
-    },
-  },
-}
-
-// Alternative method for App Router
+// NEW APPROACH: Accept file URLs instead of file uploads
 export async function POST(request: NextRequest) {
   try {
     const user = await authenticate(request)
     await connectDB()
 
-    const formData = await request.formData()
-    const title = (formData.get("title") as string)?.trim()
-    const description = (formData.get("description") as string)?.trim()
-    const newsDate = (formData.get("newsDate") as string)?.trim()
-    const newsType = (formData.get("newsType") as string)?.trim()
-    const readMoreButton = (formData.get("readMoreButton") as string)?.trim()
-    const isActiveRaw = formData.get("isActive")
-    const isActive = isActiveRaw ? isActiveRaw === "true" : true
+    // Parse JSON body (not FormData anymore)
+    const body = await request.json()
+    const {
+      title,
+      description,
+      newsDate,
+      newsType,
+      readMoreButton,
+      isActive = true,
+      imageUrl,  // S3 URL from client upload
+      videoUrl   // S3 URL from client upload
+    } = body
 
     // Validation
-    if (!title || !description || !newsType) {
+    if (!title?.trim() || !description?.trim() || !newsType?.trim()) {
       return NextResponse.json(
         { error: "Title, description, and news type are required" },
         { status: 400 },
@@ -47,53 +41,14 @@ export async function POST(request: NextRequest) {
     }
 
     const newsData: any = {
-      title,
-      description,
-      newsDate,
-      newsType,
-      readMoreButton: readMoreButton || "",
+      title: title.trim(),
+      description: description.trim(),
+      newsDate: newsDate?.trim() || "",
+      newsType: newsType.trim(),
+      readMoreButton: readMoreButton?.trim() || "",
       isActive,
-    }
-
-    // Handle image upload
-    const imageFile = formData.get("image") as File | null
-    if (imageFile && imageFile.size > 0) {
-      console.log(`Processing image: ${imageFile.name}, size: ${imageFile.size} bytes`)
-
-      const bytes = await imageFile.arrayBuffer()
-      const buffer = Buffer.from(bytes)
-
-      if (!imageFile.type.startsWith("image/")) {
-        return NextResponse.json({ error: "Only image files are allowed" }, { status: 400 })
-      }
-
-      if (imageFile.size > 5 * 1024 * 1024) {
-        return NextResponse.json({ error: "Image size must be less than 5MB" }, { status: 400 })
-      }
-
-      newsData.image = await uploadToS3(buffer, imageFile.name, imageFile.type)
-    }
-
-    // Handle video upload
-    const videoFile = formData.get("video") as File | null
-    if (videoFile && videoFile.size > 0) {
-      console.log(`Processing video: ${videoFile.name}, size: ${videoFile.size} bytes`)
-
-      const bytes = await videoFile.arrayBuffer()
-      const buffer = Buffer.from(bytes)
-
-      if (!videoFile.type.startsWith("video/")) {
-        return NextResponse.json({ error: "Only video files are allowed" }, { status: 400 })
-      }
-
-      if (videoFile.size > 50 * 1024 * 1024) {
-        return NextResponse.json(
-          { error: "Video size must be less than 50MB" },
-          { status: 400 },
-        )
-      }
-
-      newsData.video = await uploadToS3(buffer, videoFile.name, videoFile.type)
+      image: imageUrl || "",  // Store S3 URL directly
+      video: videoUrl || ""   // Store S3 URL directly
     }
 
     const newEntry = await News.create(newsData)
