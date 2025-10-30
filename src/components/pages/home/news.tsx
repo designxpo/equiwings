@@ -33,6 +33,8 @@ const News: React.FC = () => {
 
   // Frame image path
   const frame = "/assets/images/home/news/frame.png"
+  // Static video thumbnail
+  const videoThumbnail = "/assets/images/home/news/video-thumbnail.png"
 
   // Fetch news data from API
   useEffect(() => {
@@ -236,7 +238,7 @@ const News: React.FC = () => {
         whileInView="visible"
         viewport={{ once: true, amount: 0.2 }}
       >
-        <motion.h2 className="text-3xl font-semibold xl:text-5xl text-center mb-18 text-[#350D3C]" variants={headerVariants}>
+        <motion.h2 className="text-3xl font-semibold xl:text-5xl text-center text-[#350D3C]" variants={headerVariants}>
           News
         </motion.h2>
         <div className="flex justify-center items-center py-20">
@@ -264,7 +266,7 @@ const News: React.FC = () => {
         whileInView="visible"
         viewport={{ once: true, amount: 0.2 }}
       >
-        <motion.h2 className="text-3xl font-semibold xl:text-5xl text-center mb-18 text-[#350D3C]" variants={headerVariants}>
+        <motion.h2 className="text-3xl font-semibold xl:text-5xl text-center mb-2 text-[#350D3C]" variants={headerVariants}>
           News
         </motion.h2>
         <div className="flex justify-center items-center py-20">
@@ -284,7 +286,7 @@ const News: React.FC = () => {
       viewport={{ once: true, amount: 0.2 }}
     >
       {/* Header */}
-      <motion.h2 className="text-3xl font-semibold xl:text-5xl text-center mb-18 text-[#350D3C]" variants={headerVariants}>
+      <motion.h2 className="text-3xl font-semibold xl:text-5xl text-center mb-2 text-[#350D3C]" variants={headerVariants}>
         News
       </motion.h2>
 
@@ -349,7 +351,7 @@ const News: React.FC = () => {
                         className="text-sm sm:text-base font-medium text-gray-600 uppercase"
                         variants={textItemVariants}
                       >
-                        {formatDate(news.createdAt)}
+                        {formatDate(news?.createdAt)}
                       </motion.p>
                       <motion.h2
                         className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-cardinal-pink-800 leading-tight"
@@ -422,7 +424,7 @@ const News: React.FC = () => {
                     {group.items.map((news, index) => (
                       <motion.div
                         key={news._id}
-                        className="flex flex-col items-center h-full"
+                        className="flex flex-col items-center justify-center h-full"
                         variants={gridItemVariants}
                         initial="hidden"
                         whileInView="visible"
@@ -437,7 +439,7 @@ const News: React.FC = () => {
                                 variants={textItemVariants}
                               >
                                 <p className="text-lg md:text-xl font-bold text-[#350D3C] text-center">
-                                  {formatDate(news.newsDate)}
+                                  {formatDate(news?.newsDate)}
                                 </p>
                               </motion.div>
                             )}
@@ -490,7 +492,7 @@ const News: React.FC = () => {
                                 variants={textItemVariants}
                               >
                                 <p className="text-lg md:text-xl font-bold text-[#350D3C] text-center">
-                                  {formatDate(news.newsDate)}
+                                  {formatDate(news?.newsDate)}
                                 </p>
                               </motion.div>
                             )}
@@ -498,34 +500,38 @@ const News: React.FC = () => {
                         ) : (
                           /* Video Display */
                           <motion.div
-                            className="relative w-full max-w-md aspect-video rounded-lg overflow-hidden shadow-xl cursor-pointer"
+                            className="flex flex-col items-center justify-center w-full"
                             whileHover={{
                               y: -5,
                               transition: { duration: 0.3 }
                             }}
-                            onClick={() => openModal(news)}
                           >
-                            <video
-                              src={news.video}
-                              className="w-full h-full object-cover"
-                              poster={news.image || undefined}
+                            <div
+                              className="relative w-full max-w-md aspect-video rounded-lg overflow-hidden shadow-xl cursor-pointer"
+                              onClick={() => openModal(news)}
                             >
-                              Your browser does not support the video tag.
-                            </video>
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors">
-                              <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
-                                <svg className="w-8 h-8 text-[#350D3C] ml-1" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M8 5v14l11-7z" />
-                                </svg>
+                              <Image
+                                src={videoThumbnail}
+                                alt={news.title}
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 640px) 90vw, (max-width: 768px) 45vw, (max-width: 1024px) 30vw, 22vw"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors">
+                                <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
+                                  <svg className="w-8 h-8 text-[#350D3C] ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z" />
+                                  </svg>
+                                </div>
                               </div>
                             </div>
-                            {news.title && (
+                            {/* {news.title && (
                               <div className="mt-4 text-center">
                                 <p className="text-base font-semibold text-[#350D3C]">
                                   {news.title}
                                 </p>
                               </div>
-                            )}
+                            )} */}
                           </motion.div>
                         )}
                       </motion.div>
@@ -548,7 +554,7 @@ const News: React.FC = () => {
           onClick={closeModal}
         >
           <motion.div
-            className="relative max-w-lg w-full bg-white rounded-lg overflow-hidden shadow-2xl"
+            className={`relative w-full bg-white ${modalImage?.video ? "max-w-4xl" : "max-w-md"} rounded-lg overflow-hidden shadow-2xl`}
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
@@ -568,8 +574,8 @@ const News: React.FC = () => {
 
             {/* Optional: News Title at Bottom */}
             <div className="pt-6 px-4 md:px-8 bg-gray-50">
-              <h4 className="text-[#350D3C] text-lg font-semibold">
-                {modalImage.video ? modalImage.title : formatDate(modalImage?.newsDate)}
+              <h4 className="text-[#350D3C] text-lg font-semibold text-right">
+                {formatDate(modalImage?.newsDate)}
               </h4>
             </div>
 
@@ -583,7 +589,7 @@ const News: React.FC = () => {
                     controls
                     autoPlay
                     className="w-full h-full object-cover"
-                    poster={modalImage.image || undefined}
+                    poster={videoThumbnail}
                   >
                     Your browser does not support the video tag.
                   </video>
@@ -649,6 +655,16 @@ const News: React.FC = () => {
         .news-swiper .swiper-pagination-bullet-active,
         .secondary-news-swiper .swiper-pagination-bullet-active {
           opacity: 1;
+        }
+
+        .swiper-slide {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+
+        .swiper-pagination {
+          bottom: 0 !important;
         }
       `}</style>
     </motion.section>
