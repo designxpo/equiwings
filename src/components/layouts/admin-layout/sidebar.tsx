@@ -4,7 +4,7 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useSidebar } from "@/context/sidebar-context"
 import { useAdminAuth } from "@/providers/admin-auth-context"
-import { MdDashboard, MdPeople, MdProductionQuantityLimits, MdContactPhone, MdAnnouncement, MdSearch, MdImage } from "react-icons/md"
+import { MdDashboard, MdPeople, MdProductionQuantityLimits, MdContactPhone, MdAnnouncement, MdSearch, MdImage, MdSlideshow, MdCalendarMonth } from "react-icons/md"
 import { FaNewspaper, FaBloggerB } from "react-icons/fa"
 import { FiLogOut, FiX } from "react-icons/fi"
 
@@ -19,7 +19,8 @@ const navigation = [
     { name: "SEO Management", href: "/admin/seo-manage", icon: MdSearch },
     { name: "Sponsor Logos", href: "/admin/logos", icon: MdImage },
     { name: "Gallery", href: "/admin/gallery", icon: MdImage },
-
+    { name: "Slides", href: "/admin/slides", icon: MdSlideshow },
+    { name: "Events", href: "/admin/events", icon: MdCalendarMonth },
 ]
 
 export function Sidebar() {
